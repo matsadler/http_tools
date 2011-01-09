@@ -1,0 +1,80 @@
+= HTTPTools
+
+HTTPTools is a collection of lower level utilities to aid working with HTTP,
+including a fast-as-possible pure Ruby HTTP parser.
+
+* rdoc[http://sourcetagsandcodes.com/http_tools/doc/]
+* source[https://github.com/matsadler/http_tools]
+
+== HTTPTools::Parser
+
+HTTPTools::Parser is a HTTP request & response parser with an evented API.
+Written purely in Ruby, with no dependencies, it should run across all Ruby
+implementations, and install in environments without a compiler available.
+Despite being just Ruby, every effort has been made to ensure it is as fast as
+possible.
+
+=== Example
+
+  parser = HTTPTools::Parser.new
+  parser.on(:status) {|status, message| puts "#{status} #{message}"}
+  parser.on(:headers) {|headers| puts headers.inspect}
+  parser.on(:body) {|body| puts body}
+  
+  parser << "HTTP/1.1 200 OK\r\n"
+  parser << "Content-Length: 20\r\n\r\n"
+  parser << "<h1>Hello world</h1>"
+
+Prints:
+  200 OK
+  {"Content-Length" => "20"}
+  <h1>Hello world</h1>
+
+== HTTPTools::Encoding
+
+HTTPTools::Encoding provides methods to deal with several HTTP related encodings
+including url, www-form, and chunked transfer encoding. It can be used as a
+mixin or class methods on HTTPTools::Encoding.
+
+=== Example
+
+  HTTPTools::Encoding.www_form_encode({"query" => "fish", "lang" => "en"})
+  #=> "lang=en&query=fish"
+  
+  include HTTPTools::Encoding
+  www_form_decode("lang=en&query=fish")
+  #=> {"query" => "fish", "lang" => "en"}
+
+== HTTPTools::Builder
+
+HTTPTools::Builder is a provides a simple interface to build HTTP requests &
+responses. It can be used as a mixin or class methods on HTTPTools::Builder.
+
+=== Example
+
+  Builder.request(:get, "example.com")\
+  #=> "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n"
+
+== Licence
+
+(The MIT License)
+
+Copyright (c) 2011 Matthew Sadler
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
