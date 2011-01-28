@@ -58,9 +58,9 @@ module HTTP
       if headers[CONTENT_LENGTH]
         # ok
       elsif body.respond_to?(:length)
-        headers[CONTENT_LENGTH] ||= body.length
+        headers[CONTENT_LENGTH] = body.length
       elsif body.respond_to?(:stat)
-        headers[CONTENT_LENGTH] ||= body.stat.size
+        headers[CONTENT_LENGTH] = body.stat.size
       else
         raise "Content-Length must be supplied"
       end
@@ -69,7 +69,7 @@ module HTTP
     end
     
     private
-    def request(method, path, request_body=nil, request_headers={}, response_has_body=true, &block)
+    def request(method, path, request_body=nil, request_headers={}, response_has_body=true)
       parser = HTTPTools::Parser.new
       parser.force_no_body = !response_has_body
       response = nil
@@ -77,9 +77,9 @@ module HTTP
       parser.add_listener(:status) {|s, m| response = Response.new(s, m)}
       parser.add_listener(:headers) do |headers|
         response.headers = headers
-        block.call(response) if block
+        yield response if block_given?
       end
-      if block
+      if block_given?
         parser.add_listener(:stream) {|chunk| response.receive_chunk(chunk)}
       else
         parser.add_listener(:body) {|body| response.body = body}
@@ -92,8 +92,7 @@ module HTTP
       
       until parser.finished?
         begin
-          readable, = select([socket], nil, nil)
-          parser << socket.read_nonblock(1024 * 16) if readable.any?
+          parser << socket.sysread(1024 * 16)
         rescue EOFError
           parser.finish
           break
@@ -126,6 +125,10 @@ module HTTP
     def inspect
       bytesize = body.respond_to?(:bytesize) ? body.bytesize : body.to_s.length
       "#<Response #{status} #{message}: #{bytesize} bytes>"
+    end
+    
+    def to_s
+      body.to_s
     end
   end
 end
