@@ -77,13 +77,13 @@ module HTTP
       parser.add_listener(:status) {|s, m| response = Response.new(s, m)}
       parser.add_listener(:headers) do |headers|
         response.headers = headers
-        if block
-          response.parser = parser
-          block.call(response)
-          response.parser = nil
-        end
+        block.call(response) if block
       end
-      parser.add_listener(:body) {|body| response.body = body} unless block
+      if block
+        parser.add_listener(:stream) {|chunk| response.receive_chunk(chunk)}
+      else
+        parser.add_listener(:body) {|body| response.body = body}
+      end
       
       socket << HTTPTools::Builder.request(method, @host, path, request_headers)
       if request_body
@@ -106,7 +106,6 @@ module HTTP
   class Response
     attr_reader :status, :message
     attr_accessor :headers, :body
-    attr_accessor :parser # :nodoc:
     
     def initialize(status, message, headers={}, body=nil)
       @status = status
@@ -116,12 +115,12 @@ module HTTP
     end
     
     def stream(&block)
-      if parser
-        parser.add_listener(:stream, block)
-      else
-        block.call(body)
-      end
+      @stream_callback = block
       nil
+    end
+    
+    def receive_chunk(chunk) # :nodoc:
+      @stream_callback.call(chunk) if @stream_callback
     end
     
     def inspect
