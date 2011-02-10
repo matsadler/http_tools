@@ -128,6 +128,27 @@ class ResponseTest < Test::Unit::TestCase
       "Content-Type" => "text/html"}, headers)
   end
   
+  def test_weird_iis_content_header
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Length: 20\r\n"
+    parser << "Content:\r\n"
+    parser << "\r\n"
+    parser << "<h1>Hello world</h1>"
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({"Content-Length" => "20", "Content" => ""}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_apple_dot_com
     parser = HTTPTools::Parser.new
     code, message, headers = nil
