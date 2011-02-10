@@ -41,6 +41,19 @@ class ResponseTest < Test::Unit::TestCase
     assert(!parser.finished?, "parser should not be finished")
   end
   
+  def test_missing_message
+    parser = HTTPTools::Parser.new
+    code, message = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    
+    parser << "HTTP/1.1 302\r\n\r\n"
+    
+    assert_equal(302, code)
+    assert_equal("", message)
+    assert(!parser.finished?, "parser should not be finished")
+  end
+  
   def test_non_standard_message
     parser = HTTPTools::Parser.new
     version, code, message = nil

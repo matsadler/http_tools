@@ -311,7 +311,7 @@ module HTTPTools
     end
     
     def status
-      status = @buffer.scan(/\d\d\d [ -~]+\r?\n/i)
+      status = @buffer.scan(/\d\d\d[ -~]*\r?\n/i)
       if status
         @status = status.slice!(0, 3).to_i
         @status_callback.call(@status, status.strip) if @status_callback
