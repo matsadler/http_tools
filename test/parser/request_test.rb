@@ -437,14 +437,6 @@ class RequestTest < Test::Unit::TestCase
     end
   end
   
-  def test_invalid_header_key_with_colon
-    parser = HTTPTools::Parser.new
-    
-    assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nx-invalid:key: text/plain\r\n"
-    end
-  end
-    
   def test_invalid_header_key_with_control_character
     parser = HTTPTools::Parser.new
     

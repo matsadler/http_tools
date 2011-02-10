@@ -27,6 +27,7 @@ module HTTPTools
   class Parser
     include Encoding
     
+    COLON = ":".freeze
     KEY_TERMINATOR = ": ".freeze
     CONTENT_LENGTH = "Content-Length".freeze
     TRANSFER_ENCODING = "Transfer-Encoding".freeze
@@ -332,6 +333,9 @@ module HTTPTools
         body
       elsif @buffer.eos? || @buffer.check(/[!-9;-~]+:?\Z/i)
         :key_or_newline
+      elsif @last_key = @buffer.scan(/[!-9;-~]+:(?=[^ ])/i)
+        @last_key.chomp!(COLON)
+        value
       else
         raise ParseError.new("Illegal character in field name")
       end
@@ -441,6 +445,9 @@ module HTTPTools
         end_of_message
       elsif @buffer.eos? || @buffer.check(/[!-9;-~]+:?\Z/i)
         :trailer_key_or_newline
+      elsif @last_key = @buffer.scan(/[!-9;-~]+:(?=[^ ])/i)
+        @last_key.chomp!(COLON)
+        trailer_value
       else
         raise ParseError.new("Illegal character in field name")
       end

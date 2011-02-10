@@ -97,6 +97,22 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_messed_up_iis_headers
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:headers) {|h| headers = h}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Server:: Harris Associates L.P.\r\n"
+    parser << "X-DIP:202\r\n"
+    parser << "\r\n"
+    
+    assert_equal({
+      "Server" => ": Harris Associates L.P.",
+      "X-DIP" => "202"}, headers)
+  end
+  
   def test_apple_dot_com
     parser = HTTPTools::Parser.new
     code, message, headers = nil
@@ -425,6 +441,39 @@ class ResponseTest < Test::Unit::TestCase
     parser << "X-Checksum: 2a2e12c8edad17de62354ea4531ac82c\r\n\r\n"
     
     assert_equal({"X-Checksum" => "2a2e12c8edad17de62354ea4531ac82c"}, trailer)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_messed_up_iis_header_style_trailer_1
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {|t| trailer = t}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Server: Microsoft-IIS/6.0\r\n"
+    parser << "Transfer-Encoding: chunked\r\nTrailer: Server::\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "Server:: Harris Associates L.P.\r\n"
+    parser << "\r\n"
+    
+    assert_equal({"Server" => ": Harris Associates L.P."}, trailer)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_messed_up_iis_header_style_trailer_2
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {|t| trailer = t}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\nTrailer: Server::\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-DIP:202\r\n"
+    parser << "\r\n"
+    
+    assert_equal({"X-DIP" => "202"}, trailer)
     assert(parser.finished?, "parser should be finished")
   end
   
