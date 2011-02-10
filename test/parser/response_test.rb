@@ -152,6 +152,50 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_zero_length_body
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    stream = []
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:stream) {|chunk| stream.push(chunk)}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 302 Moved Temporarily\r\n"
+    parser << "Location: http://www.example.com/\r\n"
+    parser << "Content-Length: 0\r\n\r\n"
+    
+    assert_equal(302, code)
+    assert_equal("Moved Temporarily", message)
+    assert_equal({"Location" => "http://www.example.com/", "Content-Length" => "0"}, headers)
+    assert_equal([""], stream)
+    assert_equal("", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_zero_length_body_terminated_by_close
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    stream = []
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:stream) {|chunk| stream.push(chunk)}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 302 Moved Temporarily\r\n"
+    parser << "Location: http://www.example.com/\r\n\r\n"
+    parser.finish # notify parser the connection has closed
+    
+    assert_equal(302, code)
+    assert_equal("Moved Temporarily", message)
+    assert_equal({"Location" => "http://www.example.com/"}, headers)
+    assert_equal([""], stream)
+    assert_equal("", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_sub_line_chunks
     parser = HTTPTools::Parser.new
     code, message, headers, body = nil

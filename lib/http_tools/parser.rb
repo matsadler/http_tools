@@ -353,8 +353,6 @@ module HTTPTools
     def body
       if @force_no_body || NO_BODY[@status]
         end_of_message
-      elsif @buffer.eos?
-        :body
       else
         @body = "" if @body_callback
         @buffer = @buffer.rest # Switch @buffer from StringScanner to String
@@ -389,6 +387,10 @@ module HTTPTools
         else
           :body_with_length
         end
+      elsif @content_left < 1 # zero length body
+        @stream_callback.call("") if @stream_callback
+        @body_callback.call("") if @body_callback
+        end_of_message
       else
         :body_with_length
       end
