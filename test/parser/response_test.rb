@@ -113,6 +113,21 @@ class ResponseTest < Test::Unit::TestCase
       "X-DIP" => "202"}, headers)
   end
   
+  def test_header_empty_value
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:headers) {|h| headers = h}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Set-Cookie: \r\n"
+    parser << "Content-Type: text/html\r\n\r\n"
+    
+    assert_equal({
+      "Set-Cookie" => "",
+      "Content-Type" => "text/html"}, headers)
+  end
+  
   def test_apple_dot_com
     parser = HTTPTools::Parser.new
     code, message, headers = nil

@@ -342,7 +342,7 @@ module HTTPTools
     end
     
     def value
-      value = @buffer.scan(/[ -~]+\r?\n/i)
+      value = @buffer.scan(/[ -~]*\r?\n/i)
       if value
         value.chop!
         @headers[@last_key] = value
