@@ -457,7 +457,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     
     assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nAccept: téxt/plain\r\n"
+      parser << "GET / HTTP/1.1\r\nAccept: \000text/plain\r\n"
     end
   end
   

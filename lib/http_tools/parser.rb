@@ -342,12 +342,12 @@ module HTTPTools
     end
     
     def value
-      value = @buffer.scan(/[ -~]*\r?\n/i)
+      value = @buffer.scan(/[^\000-\037\177]*\r?\n/i)
       if value
         value.chop!
         @headers[@last_key] = value
         key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[ -~]+\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\Z/i)
         :value
       else
         raise ParseError.new("Illegal character in field body")
@@ -454,12 +454,12 @@ module HTTPTools
     end
     
     def trailer_value
-      value = @buffer.scan(/[ -~]+\r?\n/i)
+      value = @buffer.scan(/[^\000-\037\177]+\r?\n/i)
       if value
         value.chop!
         @trailer[@last_key] = value
         trailer_key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[ -~]+\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\Z/i)
         :trailer_value
       else
         raise ParseError.new("Illegal character in field body")
