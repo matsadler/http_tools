@@ -119,6 +119,14 @@ class TransferEncodingChunkedTest < Test::Unit::TestCase
     assert_equal("14\r\n<h1>Hello world</h1>\r\n0\r\n", encoded)
   end
   
+  def test_decode_with_space_after_chunk_length
+    # some servers mistakenly put a space after the chunk length
+    encoded = "14  \r\n<h1>Hello world</h1>\r\n0\r\n"
+    decoded = HTTPTools::Encoding.transfer_encoding_chunked_decode(encoded)
+    
+    assert_equal(["<h1>Hello world</h1>", nil], decoded)
+  end
+  
   def test_encode
     encoded = HTTPTools::Encoding.transfer_encoding_chunked_encode("foo")
     

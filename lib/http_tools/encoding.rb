@@ -141,7 +141,7 @@ module HTTPTools
       unless scanner.is_a?(StringScanner)
         scanner = StringScanner.new(scanner.dup)
       end
-      hex_chunk_length = scanner.scan(/[0-9a-fA-F]+\r?\n/)
+      hex_chunk_length = scanner.scan(/[0-9a-fA-F]+ *\r?\n/)
       return [nil, scanner.string] unless hex_chunk_length
       
       chunk_length = hex_chunk_length.to_i(16)
