@@ -126,6 +126,22 @@ class ResponseTest < Test::Unit::TestCase
       "X-DIP" => "202"}, headers)
   end
   
+  def test_space_in_header_key
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:headers) {|h| headers = h}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "X-Powered-By: PHP/5.3.5\r\n"
+    parser << "HTTP Status Code: HTTP/1.1 404 Not Found\r\n"
+    parser << "\r\n"
+    
+    assert_equal({
+      "X-Powered-By" => "PHP/5.3.5",
+      "HTTP Status Code" => "HTTP/1.1 404 Not Found"}, headers)
+  end
+  
   def test_header_empty_value
     parser = HTTPTools::Parser.new
     headers = nil
@@ -561,7 +577,7 @@ class ResponseTest < Test::Unit::TestCase
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
     
     assert_raise(HTTPTools::ParseError) do
-      parser << "x-invalid key: value\r\n\r\n"
+      parser << "x-invalid\0key: value\r\n\r\n"
     end
   end
   

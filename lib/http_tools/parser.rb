@@ -324,16 +324,16 @@ module HTTPTools
     end
     
     def key_or_newline
-      @last_key = @buffer.scan(/[!-9;-~]+: /i)
+      @last_key = @buffer.scan(/[ -9;-~]+: /i)
       if @last_key
         @last_key.chomp!(KEY_TERMINATOR)
         value
       elsif @buffer.skip(/\n|\r\n/i)
         @headers_callback.call(@headers) if @headers_callback
         body
-      elsif @buffer.eos? || @buffer.check(/[!-9;-~]+:?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[ -9;-~]+:?\Z/i)
         :key_or_newline
-      elsif @last_key = @buffer.scan(/[!-9;-~]+:(?=[^ ])/i)
+      elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
         @last_key.chomp!(COLON)
         value
       else
@@ -437,15 +437,15 @@ module HTTPTools
     #++
     
     def trailer_key_or_newline
-      if @last_key = @buffer.scan(/[!-9;-~]+: /i)
+      if @last_key = @buffer.scan(/[ -9;-~]+: /i)
         @last_key.chomp!(KEY_TERMINATOR)
         trailer_value
       elsif @buffer.skip(/\n|\r\n/i)
         @trailer_callback.call(@trailer) if @trailer_callback
         end_of_message
-      elsif @buffer.eos? || @buffer.check(/[!-9;-~]+:?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[ -9;-~]+:?\Z/i)
         :trailer_key_or_newline
-      elsif @last_key = @buffer.scan(/[!-9;-~]+:(?=[^ ])/i)
+      elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
         @last_key.chomp!(COLON)
         trailer_value
       else
