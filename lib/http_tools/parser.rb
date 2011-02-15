@@ -311,12 +311,13 @@ module HTTPTools
     end
     
     def status
-      status = @buffer.scan(/\d\d\d[ -~]*\r?\n/i)
+      status = @buffer.scan(/\d\d\d[^\000-\037\177]*\r?\n/i)
       if status
         @status = status.slice!(0, 3).to_i
         @status_callback.call(@status, status.strip) if @status_callback
         key_or_newline
-      elsif @buffer.eos? || @buffer.check(/\d(\d(\d( ([a-z]+\r?)?)?)?)?\Z/i)
+      elsif @buffer.eos? ||
+        @buffer.check(/\d(\d(\d( ([^\000-\037\177]+\r?)?)?)?)?\Z/i)
         :status
       else
         raise ParseError.new("Invalid status line")

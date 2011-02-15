@@ -69,6 +69,19 @@ class ResponseTest < Test::Unit::TestCase
     assert(!parser.finished?, "parser should not be finished")
   end
   
+  def test_status_message_with_accent
+    parser = HTTPTools::Parser.new
+    code, message = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    
+    parser << "HTTP/1.1 403 Accès interdit\r\n\r\n"
+    
+    assert_equal(403, code)
+    assert_equal("Accès interdit", message)
+    assert(!parser.finished?, "parser should not be finished")
+  end
+  
   def test_no_content
     parser = HTTPTools::Parser.new
     code, message = nil
