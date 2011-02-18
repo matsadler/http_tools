@@ -438,6 +438,33 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  # shouldn't really be allowed, but IIS can't do chunked encoding properly
+  def test_chunked_terminated_by_close
+    parser = HTTPTools::Parser.new
+    code, message, headers = nil
+    body = []
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:stream) {|b| body << b}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Connection: close\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "\r\n"
+    parser << "9\r\n<h1>Hello\r\n"
+    parser << "b\r\n world</h1>\r\n"
+    parser.finish # notify parser the connection has closed
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({
+      "Transfer-Encoding" => "chunked",
+      "Connection" => "close"}, headers)
+    assert_equal(["<h1>Hello", " world</h1>"], body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_finished
     parser = HTTPTools::Parser.new
     code, message, body, remainder = nil

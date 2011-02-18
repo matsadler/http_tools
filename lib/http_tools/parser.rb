@@ -32,6 +32,8 @@ module HTTPTools
     CONTENT_LENGTH = "Content-Length".freeze
     TRANSFER_ENCODING = "Transfer-Encoding".freeze
     TRAILER = "Trailer".freeze
+    CONNECTION = "Connection".freeze
+    CLOSE = "close".freeze
     CHUNKED = "chunked".freeze
     EVENTS = ["method", "path", "uri", "fragment", "version", "status", "key",
       "value", "headers", "stream", "body", "trailers", "finished",
@@ -122,6 +124,10 @@ module HTTPTools
     # 
     def finish
       if @state == :body_on_close
+        @body_callback.call(@body) if @body_callback
+        @state = end_of_message
+      elsif @state == :body_chunked && @headers[CONNECTION] == CLOSE &&
+        !@headers[TRAILER] && @buffer.length == 0
         @body_callback.call(@body) if @body_callback
         @state = end_of_message
       else
