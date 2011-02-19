@@ -211,6 +211,8 @@ module HTTPTools
     # [body]       Supplied with one argument, the message body as a String,
     #              e.g. "<h1>Hello world</h1>"
     # 
+    # [trailer]    Supplied with one argument, the message trailer as a Hash
+    # 
     # [finished]   Supplied with one argument, any data left in the parser's
     #              buffer after the end of the HTTP message (likely nil, but
     #              possibly the start of the next message)
