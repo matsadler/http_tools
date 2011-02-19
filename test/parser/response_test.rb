@@ -330,6 +330,25 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_break_between_crlf
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 200 OK\r"
+    parser << "\nContent-Length: 20\r"
+    parser << "\n\r\n<h1>Hello world</h1>"
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({"Content-Length" => "20"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_body_with_key_terminator_like_value
     parser = HTTPTools::Parser.new
     code, message, headers, body = nil

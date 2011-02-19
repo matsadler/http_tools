@@ -354,7 +354,7 @@ module HTTPTools
         value.chop!
         @headers[@last_key] = value
         key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\r?\Z/i)
         :value
       else
         raise ParseError.new("Illegal character in field body")
@@ -466,7 +466,7 @@ module HTTPTools
         value.chop!
         @trailer[@last_key] = value
         trailer_key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\r?\Z/i)
         :trailer_value
       else
         raise ParseError.new("Illegal character in field body")
