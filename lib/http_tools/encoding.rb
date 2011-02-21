@@ -142,22 +142,26 @@ module HTTPTools
       decoded = ""
       
       remainder = while true
-        unconsumed = scanner.rest
+        start_pos = scanner.pos
         hex_chunk_length = scanner.scan(/[0-9a-f]+ *\r?\n/i)
-        break unconsumed unless hex_chunk_length
+        break scanner.rest unless hex_chunk_length
         
         chunk_length = hex_chunk_length.to_i(16)
         
         if chunk_length == 0
           break nil
         elsif scanner.rest_size > chunk_length
-          chunk = unconsumed.slice(hex_chunk_length.length, chunk_length)
+          chunk = scanner.rest.slice(0, chunk_length)
           scanner.pos += chunk_length
           if chunk && scanner.skip(/\n|\r\n/i)
             decoded << chunk
+          else
+            scanner.pos = start_pos
+            break scanner.rest
           end
         else
-          break unconsumed
+          scanner.unscan
+          break scanner.rest
         end
       end
       
