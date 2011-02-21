@@ -127,6 +127,13 @@ class TransferEncodingChunkedTest < Test::Unit::TestCase
     assert_equal(["<h1>Hello world</h1>", nil], decoded)
   end
   
+  def test_decode_lots_of_tiny_chunks
+    encoded = "1\r\na\r\n" * 10000 + "0\r\n"
+    decoded = HTTPTools::Encoding.transfer_encoding_chunked_decode(encoded)
+    
+    assert_equal(["a" * 10000, nil], decoded)
+  end
+  
   def test_encode
     encoded = HTTPTools::Encoding.transfer_encoding_chunked_encode("foo")
     

@@ -134,35 +134,34 @@ module HTTPTools
     #   while remainder
     #     remainder << get_data
     #     chunk, remainder = transfer_encoding_chunked_decode(remainder)
-    #     decoded << chunk
+    #     decoded << chunk if chunk
     #   end
     # 
-    def transfer_encoding_chunked_decode(scanner)
-      unless scanner.is_a?(StringScanner)
-        scanner = StringScanner.new(scanner.dup)
-      end
-      hex_chunk_length = scanner.scan(/[0-9a-fA-F]+ *\r?\n/)
-      return [nil, scanner.string] unless hex_chunk_length
+    def transfer_encoding_chunked_decode(string)
+      scanner = StringScanner.new(string.dup)
+      decoded = ""
       
-      chunk_length = hex_chunk_length.to_i(16)
-      return [nil, nil] if chunk_length == 0
-      
-      chunk = scanner.rest.slice(0, chunk_length)
-      begin
-        scanner.pos += chunk_length
-        separator = scanner.scan(/\n|\r\n/)
-      rescue RangeError
+      remainder = while true
+        unconsumed = scanner.rest
+        hex_chunk_length = scanner.scan(/[0-9a-f]+ *\r?\n/i)
+        break unconsumed unless hex_chunk_length
+        
+        chunk_length = hex_chunk_length.to_i(16)
+        
+        if chunk_length == 0
+          break nil
+        elsif scanner.rest_size > chunk_length
+          chunk = unconsumed.slice(hex_chunk_length.length, chunk_length)
+          scanner.pos += chunk_length
+          if chunk && scanner.skip(/\n|\r\n/i)
+            decoded << chunk
+          end
+        else
+          break unconsumed
+        end
       end
       
-      if separator && chunk.length == chunk_length
-        scanner.string.replace(scanner.rest)
-        scanner.reset
-        rest, remainder = transfer_encoding_chunked_decode(scanner)
-        chunk << rest if rest
-        [chunk, remainder]
-      else
-        [nil, scanner.string]
-      end
+      [(decoded if decoded.length > 0), remainder]
     end
     
   end
