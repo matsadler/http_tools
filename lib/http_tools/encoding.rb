@@ -150,18 +150,20 @@ module HTTPTools
         
         if chunk_length == 0
           break nil
-        elsif scanner.rest_size > chunk_length
-          chunk = scanner.rest.slice(0, chunk_length)
-          scanner.pos += chunk_length
-          if chunk && scanner.skip(/\n|\r\n/i)
-            decoded << chunk
-          else
+        else
+          begin
+            chunk = scanner.rest.slice(0, chunk_length)
+            scanner.pos += chunk_length
+            if chunk && scanner.skip(/\n|\r\n/i)
+              decoded << chunk
+            else
+              scanner.pos = start_pos
+              break scanner.rest
+            end
+          rescue RangeError
             scanner.pos = start_pos
             break scanner.rest
           end
-        else
-          scanner.unscan
-          break scanner.rest
         end
       end
       
