@@ -127,7 +127,7 @@ module HTTPTools
         @body_callback.call(@body) if @body_callback
         @state = end_of_message
       elsif @state == :body_chunked && @headers[CONNECTION] == CLOSE &&
-        !@headers[TRAILER] && @buffer.length == 0
+        !@headers[TRAILER] && @buffer.eos?
         @body_callback.call(@body) if @body_callback
         @state = end_of_message
       else
@@ -368,7 +368,6 @@ module HTTPTools
         end_of_message
       else
         @body = "" if @body_callback
-        @buffer = @buffer.rest # Switch @buffer from StringScanner to String
         length = @headers[CONTENT_LENGTH]
         if length
           @content_left = length.to_i
@@ -381,19 +380,14 @@ module HTTPTools
       end
     end
     
-    #--
-    # From this point on @buffer is a String, not a StringScanner.
-    # This is because 1. we don't need a StringScanner anymore, 2. if we
-    # switched to a diffrent instace variable we'd need a condition in #concat
-    # to feed the data in to the new instace variable, which would slow us down.
-    #++
-    
     def body_with_length
-      if @buffer.length > 0
-        chunk = @buffer.slice!(0, @content_left)
+      if !@buffer.eos?
+        chunk = @buffer.string.slice(@buffer.pos, @content_left)
         @stream_callback.call(chunk) if @stream_callback
         @body << chunk if @body_callback
-        @content_left -= chunk.length
+        chunk_length = chunk.length
+        @buffer.pos += chunk_length
+        @content_left -= chunk_length
         if @content_left < 1
           @body_callback.call(@body) if @body_callback
           end_of_message
@@ -410,23 +404,17 @@ module HTTPTools
     end
     
     def body_chunked
-      decoded, remainder = transfer_encoding_chunked_decode(@buffer)
+      decoded, remainder = transfer_encoding_chunked_decode(nil, @buffer)
       if decoded
         @stream_callback.call(decoded) if @stream_callback
         @body << decoded if @body_callback
       end
       if remainder
-        @buffer = remainder
         :body_chunked
       else
-        @buffer.slice!(/.*0\r\n/m)
         @body_callback.call(@body) if @body_callback
         if @headers[TRAILER] || @force_trailer
           @trailer = {}
-          # @buffer switches back to a StringScanner for the trailer.
-          @buffer_backup_reference.string.replace(@buffer)
-          @buffer_backup_reference.reset
-          @buffer = @buffer_backup_reference
           trailer_key_or_newline
         else
           end_of_message
@@ -435,15 +423,12 @@ module HTTPTools
     end
     
     def body_on_close
-      @stream_callback.call(@buffer) if @stream_callback
-      @body << @buffer if @body_callback
-      @buffer = ""
+      chunk = @buffer.rest
+      @buffer.terminate
+      @stream_callback.call(chunk) if @stream_callback
+      @body << chunk if @body_callback
       :body_on_close
     end
-    
-    #--
-    # @buffer switches back to a StringScanner for the trailer.
-    #++
     
     def trailer_key_or_newline
       if @last_key = @buffer.scan(/[ -9;-~]+: /i)

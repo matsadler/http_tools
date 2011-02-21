@@ -137,8 +137,7 @@ module HTTPTools
     #     decoded << chunk if chunk
     #   end
     # 
-    def transfer_encoding_chunked_decode(string)
-      scanner = StringScanner.new(string)
+    def transfer_encoding_chunked_decode(str, scanner=StringScanner.new(str))
       decoded = ""
       
       remainder = while true
