@@ -162,11 +162,11 @@ class ResponseTest < Test::Unit::TestCase
     parser.add_listener(:headers) {|h| headers = h}
     
     parser << "HTTP/1.1 200 OK\r\n"
-    parser << "Set-Cookie: \r\n"
+    parser << "X-Empty: \r\n"
     parser << "Content-Type: text/html\r\n\r\n"
     
     assert_equal({
-      "Set-Cookie" => "",
+      "X-Empty" => "",
       "Content-Type" => "text/html"}, headers)
   end
   
@@ -189,6 +189,19 @@ class ResponseTest < Test::Unit::TestCase
     assert_equal({"Content-Length" => "20", "Content" => ""}, headers)
     assert_equal("<h1>Hello world</h1>", body)
     assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_multiple_set_cookie_headers
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:headers) {|h| headers = h}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Set-Cookie: foo=bar\r\n"
+    parser << "Set-Cookie: baz=qux\r\n\r\n"
+    
+    assert_equal({"Set-Cookie" => ["foo=bar", "baz=qux"]}, headers)
   end
   
   def test_apple_dot_com

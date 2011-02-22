@@ -354,7 +354,11 @@ module HTTPTools
       value = @buffer.scan(/[^\000-\037\177]*\r?\n/i)
       if value
         value.chop!
-        @headers[@last_key] = value
+        if ARRAY_VALUE_HEADERS[@last_key]
+          @headers.fetch(@last_key) {@headers[@last_key] = []}.push(value)
+        else
+          @headers[@last_key] = value
+        end
         key_or_newline
       elsif @buffer.eos? || @buffer.check(/[^\000-\037\177]+\r?\Z/i)
         :value

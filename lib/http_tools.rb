@@ -96,6 +96,9 @@ module HTTPTools
   NO_BODY.merge!(204 => true, 304 => true, nil => false)
   100.upto(199) {|status_code| NO_BODY[status_code] = true}
   
+  ARRAY_VALUE_HEADERS = Hash.new {|hash, key| hash[key] = false}
+  ARRAY_VALUE_HEADERS.merge!("Set-Cookie" => true)
+  
   CRLF = "\r\n".freeze
   SPACE = " ".freeze
   
