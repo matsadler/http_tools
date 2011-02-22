@@ -18,7 +18,7 @@ Benchmark.bm(36) do |x|
   end
   
   x.report("a couple of big chunks") do
-    encoded = "2710\r\n#{"a" * 1000}" * 2 + "0\r\n"
+    encoded = "2710\r\n#{"a" * 10000}\r\n" * 2 + "0\r\n"
     1_000.times do
        HTTPTools::Encoding.transfer_encoding_chunked_decode(encoded)
     end
