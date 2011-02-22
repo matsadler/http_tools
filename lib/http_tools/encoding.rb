@@ -146,23 +146,20 @@ module HTTPTools
         break scanner.rest unless hex_chunk_length
         
         chunk_length = hex_chunk_length.to_i(16)
+        break nil if chunk_length == 0
         
-        if chunk_length == 0
-          break nil
-        else
-          begin
-            chunk = scanner.rest.slice(0, chunk_length)
-            scanner.pos += chunk_length
-            if chunk && scanner.skip(/\n|\r\n/i)
-              decoded << chunk
-            else
-              scanner.pos = start_pos
-              break scanner.rest
-            end
-          rescue RangeError
+        begin
+          chunk = scanner.rest.slice(0, chunk_length)
+          scanner.pos += chunk_length
+          if chunk && scanner.skip(/\n|\r\n/i)
+            decoded << chunk
+          else
             scanner.pos = start_pos
             break scanner.rest
           end
+        rescue RangeError
+          scanner.pos = start_pos
+          break scanner.rest
         end
       end
       
