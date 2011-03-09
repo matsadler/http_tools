@@ -340,7 +340,7 @@ module HTTPTools
       elsif @buffer.skip(/\n|\r\n/i)
         @headers_callback.call(@headers) if @headers_callback
         body
-      elsif @buffer.eos? || @buffer.check(/[ -9;-~]+:?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :key_or_newline
       elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
         @last_key.chomp!(COLON)
@@ -441,7 +441,7 @@ module HTTPTools
       elsif @buffer.skip(/\n|\r\n/i)
         @trailer_callback.call(@trailer) if @trailer_callback
         end_of_message
-      elsif @buffer.eos? || @buffer.check(/[ -9;-~]+:?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :trailer_key_or_newline
       elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
         @last_key.chomp!(COLON)

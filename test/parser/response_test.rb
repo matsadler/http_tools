@@ -353,7 +353,8 @@ class ResponseTest < Test::Unit::TestCase
     
     parser << "HTTP/1.1 200 OK\r"
     parser << "\nContent-Length: 20\r"
-    parser << "\n\r\n<h1>Hello world</h1>"
+    parser << "\n\r"
+    parser << "\n<h1>Hello world</h1>"
     
     assert_equal(200, code)
     assert_equal("OK", message)
