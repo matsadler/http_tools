@@ -6,11 +6,15 @@ including a fast-as-possible pure Ruby HTTP parser.
 * rdoc[http://sourcetagsandcodes.com/http_tools/doc/]
 * source[https://github.com/matsadler/http_tools]
 
+== Platform Support
+
+Written purely in Ruby, with no dependencies outside of the standard library, it
+should run across all Ruby implementations compatible with 1.8 or later, and
+install in environments without a compiler available.
+
 == HTTPTools::Parser
 
 HTTPTools::Parser is a HTTP request & response parser with an evented API.
-Written purely in Ruby, with no dependencies, it should run across all Ruby
-implementations, and install in environments without a compiler available.
 Despite being just Ruby, every effort has been made to ensure it is as fast as
 possible.
 
