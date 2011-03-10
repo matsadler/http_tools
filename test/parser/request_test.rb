@@ -441,7 +441,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     
     assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nx-invalid-kéy: text/plain\r\n"
+      parser << "GET / HTTP/1.1\r\nx-invalid\000key: text/plain\r\n"
     end
   end
   

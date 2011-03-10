@@ -204,6 +204,72 @@ class ResponseTest < Test::Unit::TestCase
     assert_equal({"Set-Cookie" => ["foo=bar", "baz=qux"]}, headers)
   end
   
+  def test_skip_junk_headers_at_end
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 301 Redirect\r\n"
+    parser << "Location: /index.html\r\n"
+    parser << "Content-Length: 74\r\n"
+    parser << "301 Moved Permanently\r\n\r\n"
+    parser << "You should have been redirected to\n"
+    parser << "<a href=\"/index.html\">/index.html</a>.\n"
+    
+    assert_equal(301, code)
+    assert_equal("Redirect", message)
+    assert_equal({"Location" => "/index.html", "Content-Length" => "74"}, headers)
+    assert_equal("You should have been redirected to\n<a href=\"/index.html\">/index.html</a>.\n", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_skip_junk_headers_at_start
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.0 200 OK\r\n"
+    parser << "QWEBS/1.0 (HP 3000)\r\n"
+    parser << "Content-Type: text/html\r\n\r\n"
+    parser << "<h1>Hello world</h1>"
+    parser.finish
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({"Content-Type" => "text/html"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_skip_junk_headers_in_the_middle
+    parser = HTTPTools::Parser.new
+    code, message, headers, body = nil
+    
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Length: 20\r\n"
+    parser << "random\t"
+    parser << "garbage\n"
+    parser << "Content-Type: text/html\r\n"
+    parser << "\r\n"
+    parser << "<h1>Hello world</h1>"
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({"Content-Length" => "20", "Content-Type" => "text/html"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_apple_dot_com
     parser = HTTPTools::Parser.new
     code, message, headers = nil

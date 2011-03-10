@@ -346,6 +346,16 @@ module HTTPTools
         @last_key.chomp!(COLON)
         value
       else
+        skip_bad_header
+      end
+    end
+    
+    def skip_bad_header
+      if @buffer.skip(/[^\000\n\177]*\n/)
+        key_or_newline
+      elsif @buffer.check(/[^\000\n\177]+\Z/)
+        :skip_bad_header
+      else
         raise ParseError.new("Illegal character in field name")
       end
     end
