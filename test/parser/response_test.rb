@@ -15,6 +15,17 @@ class ResponseTest < Test::Unit::TestCase
     assert_equal("1.1", version)
   end
   
+  def test_one_dot_x_version
+    parser = HTTPTools::Parser.new
+    version = nil
+    
+    parser.add_listener(:version) {|v| version = v}
+    
+    parser << "HTTP/1.x "
+    
+    assert_equal("1.x", version)
+  end
+  
   def test_ok
     parser = HTTPTools::Parser.new
     code, message = nil

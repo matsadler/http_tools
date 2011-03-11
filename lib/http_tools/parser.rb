@@ -291,7 +291,7 @@ module HTTPTools
     end
     
     def request_http_version
-      version = @buffer.scan(/[0-9]+\.[0-9]+\r\n/i)
+      version = @buffer.scan(/[0-9]+\.[0-9x]+\r\n/i)
       if version
         if @version_callback
           version.chop!
@@ -306,7 +306,7 @@ module HTTPTools
     end
     
     def response_http_version
-      version = @buffer.scan(/[0-9]+\.[0-9]+ /i)
+      version = @buffer.scan(/[0-9]+\.[0-9x]+ /i)
       if version
         if @version_callback
           version.chop!

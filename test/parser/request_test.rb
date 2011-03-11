@@ -315,6 +315,17 @@ class RequestTest < Test::Unit::TestCase
     assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP\r\n"}
   end
   
+  def test_one_dot_x_protocol_version
+    parser = HTTPTools::Parser.new
+    version = nil
+    
+    parser.add_listener(:version) {|v| version = v}
+    
+    parser << "GET / HTTP/1.x\r\n"
+    
+    assert_equal("1.x", version)
+  end
+  
   def test_reset
     parser = HTTPTools::Parser.new
     method = nil
