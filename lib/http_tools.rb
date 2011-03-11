@@ -109,5 +109,6 @@ module HTTPTools
   autoload :ParseError, require_base + 'errors'
   autoload :EndOfMessageError, require_base + 'errors'
   autoload :MessageIncompleteError, require_base + 'errors'
+  autoload :EmptyMessageError, require_base + 'errors'
   
 end

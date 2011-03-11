@@ -755,4 +755,10 @@ class ResponseTest < Test::Unit::TestCase
     assert_raise(HTTPTools::MessageIncompleteError) {parser.finish}
   end
   
+  def test_empty
+    parser = HTTPTools::Parser.new
+    
+    assert_raise(HTTPTools::EmptyMessageError) {parser.finish}
+  end
+  
 end

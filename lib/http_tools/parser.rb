@@ -130,6 +130,8 @@ module HTTPTools
         !@headers[TRAILER] && @buffer.eos?
         @body_callback.call(@body) if @body_callback
         @state = end_of_message
+      elsif @state == :start && @buffer.string.length < 1
+        raise EmptyMessageError.new("Message empty")
       else
         raise MessageIncompleteError.new("Message ended early")
       end
