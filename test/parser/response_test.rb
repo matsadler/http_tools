@@ -575,6 +575,36 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_html_body_only_not_allowed
+    parser = HTTPTools::Parser.new
+    
+    assert_raise(HTTPTools::ParseError) do
+      parser << "<html><p>HTTP is hard</p></html>"
+    end
+  end
+  
+  def test_html_body_only_allowed
+    parser = HTTPTools::Parser.new
+    version, code, message, headers, body = nil
+    
+    parser.allow_html_without_headers = true
+    
+    parser.add_listener(:version) {|v| version = v}
+    parser.add_listener(:status) {|c, m| code, message = c, m}
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "<html><p>HTTP is hard</p></html>"
+    parser.finish
+    
+    assert_equal("0.0", version)
+    assert_equal(200, code)
+    assert_equal("", message)
+    assert_equal({}, headers)
+    assert_equal("<html><p>HTTP is hard</p></html>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_finished
     parser = HTTPTools::Parser.new
     code, message, body, remainder = nil

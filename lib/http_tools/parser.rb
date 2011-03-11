@@ -47,6 +47,9 @@ module HTTPTools
     # Skip parsing the body, e.g. with the response to a HEAD request.
     attr_accessor :force_no_body
     
+    # Allow responses with no status line or headers if it looks like HTML.
+    attr_accessor :allow_html_without_headers
+    
     # :call-seq: Parser.new(delegate=nil) -> parser
     # 
     # Create a new HTTPTools::Parser.
@@ -244,6 +247,8 @@ module HTTPTools
         response_http_version
       elsif @buffer.check(/[a-z]+\Z/i)
         :start
+      elsif @allow_html_without_headers && @buffer.check(/\s*</i)
+        skip_headers
       else
         raise ParseError.new("Protocol or method not recognised")
       end
@@ -318,6 +323,14 @@ module HTTPTools
       else
         raise ParseError.new("Invalid version specifier")
       end
+    end
+    
+    def skip_headers
+      @version_callback.call("0.0")
+      @status = 200
+      @status_callback.call(@status, "")
+      @headers_callback.call(@headers)
+      body
     end
     
     def status

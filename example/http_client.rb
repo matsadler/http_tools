@@ -71,6 +71,7 @@ module HTTP
     private
     def request(method, path, request_body=nil, request_headers={}, response_has_body=true)
       parser = HTTPTools::Parser.new
+      parser.allow_html_without_headers = true
       parser.force_no_body = !response_has_body
       response = nil
       
