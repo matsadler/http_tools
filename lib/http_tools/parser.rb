@@ -326,10 +326,10 @@ module HTTPTools
     end
     
     def skip_headers
-      @version_callback.call("0.0")
+      @version_callback.call("0.0") if @version_callback
       @status = 200
-      @status_callback.call(@status, "")
-      @headers_callback.call(@headers)
+      @status_callback.call(@status, "") if @status_callback
+      @headers_callback.call(@headers) if @headers_callback
       body
     end
     
