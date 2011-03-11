@@ -440,6 +440,24 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_double_cr
+    parser = HTTPTools::Parser.new
+    headers, body = nil
+    
+    parser.add_listener(:headers) {|h| headers = h}
+    parser.add_listener(:body) {|b| body = b}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Page-Completion-Status: Normal\r\r\n"
+    parser << "Content-Length: 20\r\n"
+    parser << "\r\n"
+    parser << "<h1>Hello world</h1>"
+    
+    assert_equal({"Page-Completion-Status" => "Normal\r", "Content-Length" => "20"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_body_with_key_terminator_like_value
     parser = HTTPTools::Parser.new
     code, message, headers, body = nil
