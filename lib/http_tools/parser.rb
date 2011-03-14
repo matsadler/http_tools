@@ -245,7 +245,7 @@ module HTTPTools
         uri
       elsif @buffer.skip(/HTTP\//i)
         response_http_version
-      elsif @buffer.check(/[a-z]+\Z/i)
+      elsif @buffer.check(/[a-z]*\Z/i)
         :start
       elsif @allow_html_without_headers && @buffer.check(/\s*</i)
         skip_headers
