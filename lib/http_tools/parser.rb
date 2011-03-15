@@ -261,7 +261,7 @@ module HTTPTools
         if @path_callback && uri =~ /^\//i
           path = uri.dup
           query = path.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
-          query.slice!(0) if query
+          query ? query.slice!(0) : query = ""
           @path_callback.call(path, query)
         end
         @uri_callback.call(uri) if @uri_callback

@@ -32,28 +32,30 @@ class RequestTest < Test::Unit::TestCase
   
   def test_empty_path
     parser = HTTPTools::Parser.new
-    result = nil
+    path, query = nil
     
-    parser.add_listener(:path) do |path, query|
-      result = path
+    parser.add_listener(:path) do |p, q|
+      path, query = p, q
     end
     
     parser << "GET / HTTP/1.1\r\n"
     
-    assert_equal("/", result)
+    assert_equal("/", path)
+    assert_equal("", query)
   end
   
   def test_basic_path
     parser = HTTPTools::Parser.new
-    result = nil
+    path, query = nil
     
-    parser.add_listener(:path) do |path, query|
-      result = path
+    parser.add_listener(:path) do |p, q|
+      path, query = p, q
     end
     
     parser << "GET /foo HTTP/1.1\r\n"
     
-    assert_equal("/foo", result)
+    assert_equal("/foo", path)
+    assert_equal("", query)
   end
   
   def test_complicated_path
