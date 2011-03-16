@@ -67,13 +67,17 @@ module HTTP
       end
     end
     
+    def default_env
+      PROTOTYPE_ENV.merge(
+        SERVER_NAME => host,
+        SERVER_PORT => port,
+        RACK_INPUT => StringIO.new).merge!(@default_env)
+    end
+    
     private
     def on_connection(socket)
       parser = HTTPTools::Parser.new
-      env = PROTOTYPE_ENV.merge(
-        SERVER_NAME => host,
-        SERVER_PORT => port,
-        RACK_INPUT => StringIO.new).merge(default_env)
+      env = default_env
       
       parser.on(:method) do |method|
         parser.force_no_body = NO_BODY[method.upcase]
