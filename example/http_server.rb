@@ -46,13 +46,14 @@ module HTTP
     NO_BODY = {"GET" => true, "HEAD" => true}
     
     attr_reader :app, :host, :port, :server
-    attr_accessor :timeout, :default_env
+    attr_accessor :timeout, :default_env, :multithread
     
     def initialize(app, options={})
       @app = app
       @host = options[:Host] || "0.0.0.0"
       @port = (options[:Port] || 8080).to_s
       @default_env = options[:default_env] || {}
+      @multithread = options[:multithread]
       @server = TCPServer.new(host, port)
       @timeout = 10
     end
@@ -63,7 +64,11 @@ module HTTP
     
     def listen
       while socket = server.accept
-        on_connection(socket)
+        if multithread
+          Thread.new {on_connection(socket)}
+        else
+          on_connection(socket)
+        end
       end
     end
     
