@@ -6,7 +6,6 @@ require 'http_tools'
 
 module HTTP
   class Server
-    include HTTPTools::Encoding
     
     REQUEST_METHOD = "REQUEST_METHOD".freeze
     SCRIPT_NAME = "SCRIPT_NAME".freeze
