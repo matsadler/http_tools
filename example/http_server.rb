@@ -50,8 +50,8 @@ module HTTP
     
     def initialize(app, options={})
       @app = app
-      @host = options[:Host] || "0.0.0.0"
-      @port = (options[:Port] || 8080).to_s
+      @host = options[:host] || options[:Host] || "0.0.0.0"
+      @port = (options[:port] || options[:Port] || 8080).to_s
       @default_env = options[:default_env] || {}
       @multithread = options[:multithread]
       @server = TCPServer.new(host, port)
