@@ -64,10 +64,11 @@ module HTTP
     
     def listen
       while socket = server.accept
-        if multithread
-          Thread.new {on_connection(socket)}
-        else
-          on_connection(socket)
+        thread = Thread.new {on_connection(socket)}
+        begin
+          thread.join unless multithread
+        rescue StandardError, LoadError, SyntaxError
+          socket.close rescue nil
         end
       end
     end
