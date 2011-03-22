@@ -35,11 +35,13 @@ module HTTPTools
     CONNECTION = "Connection".freeze
     CLOSE = "close".freeze
     CHUNKED = "chunked".freeze
-    EVENTS = ["method", "path", "uri", "fragment", "version", "status", "key",
-      "value", "headers", "stream", "body", "trailers", "finished",
-      "error"].map {|event| event.freeze}.freeze
+    EVENTS = %W{headers stream trailers finished error}.map do |event|
+      event.freeze
+    end.freeze
     
     attr_reader :state # :nodoc:
+    attr_reader :request_method, :path_info, :query_string, :request_uri,
+      :fragment, :version, :status_code, :message, :headers, :trailer
     
     # Force parser to expect and parse a trailer when Trailer header missing.
     attr_accessor :force_trailer
@@ -73,11 +75,7 @@ module HTTPTools
       @state = :start
       @buffer = StringScanner.new("")
       @buffer_backup_reference = @buffer
-      @status = nil
       @headers = {}
-      @last_key = nil
-      @content_left = nil
-      @body = nil
       if delegate
         EVENTS.each do |event|
           id = "on_#{event}"
@@ -127,11 +125,9 @@ module HTTPTools
     # 
     def finish
       if @state == :body_on_close
-        @body_callback.call(@body) if @body_callback
         @state = end_of_message
       elsif @state == :body_chunked && @headers[CONNECTION] == CLOSE &&
         !@headers[TRAILER] && @buffer.eos?
-        @body_callback.call(@body) if @body_callback
         @state = end_of_message
       elsif @state == :start && @buffer.string.length < 1
         raise EmptyMessageError.new("Message empty")
@@ -165,12 +161,17 @@ module HTTPTools
       @buffer = @buffer_backup_reference
       @buffer.string.replace("")
       @buffer.reset
-      # @status = nil
+      @request_method = nil
+      @path_info = nil
+      @query_string = nil
+      @request_uri = nil
+      @fragment = nil
+      @version = nil
+      @status_code = nil
       @headers = {}
       @trailer = {}
-      # @last_key = nil
-      # @content_left = nil
-      @body = nil
+      @last_key = nil
+      @content_left = nil
       self
     end
     
@@ -179,44 +180,18 @@ module HTTPTools
     # parser.on(event) {|arg1 [, arg2]| block} -> parser
     # parser.on(event, proc) -> parser
     # 
-    # Available events are :method, :path, :version, :status, :headers, :stream,
-    # :body, and :error.
+    # Available events are :headers, :stream, :body, and :error.
     # 
     # Adding a second callback for an event will overwite the existing callback
     # or delegate.
     # 
     # Events:
-    # [method]     Supplied with one argument, the HTTP method as a String,
-    #              e.g. "GET"
-    # 
-    # [path]       Supplied with two arguments, the request path as a String,
-    #              e.g. "/example.html", and the query string as a String,
-    #              e.g. "query=foo"
-    #              (this callback is only called if the request uri is a path)
-    # 
-    # [uri]        Supplied with one argument, the request uri as a String,
-    #              e.g. "/example.html?query=foo"
-    # 
-    # [fragment]   Supplied with one argument, the fragment from the request
-    #              uri, if present
-    # 
-    # [version]    Supplied with one argument, the HTTP version as a String,
-    #              e.g. "1.1"
-    # 
-    # [status]     Supplied with two arguments, the HTTP status code as a
-    #              Numeric, e.g. 200, and the HTTP status message as a String,
-    #              e.g. "OK"
-    # 
-    # [headers]    Supplied with one argument, the message headers as a Hash,
-    #              e.g. {"Content-Length" => "20"}
+    # [headers]    Called when headers are complete
     # 
     # [stream]     Supplied with one argument, the last chunk of body data fed
     #              in to the parser as a String, e.g. "<h1>Hello"
     # 
-    # [body]       Supplied with one argument, the message body as a String,
-    #              e.g. "<h1>Hello world</h1>"
-    # 
-    # [trailer]    Supplied with one argument, the message trailer as a Hash
+    # [trailer]    Called on the completion of the trailer, if present
     # 
     # [finished]   Supplied with one argument, any data left in the parser's
     #              buffer after the end of the HTTP message (likely nil, but
@@ -235,13 +210,10 @@ module HTTPTools
     
     private
     def start
-      method = @buffer.scan(/[a-z]+ /i)
-      if method
-        if @method_callback
-          method.chop!
-          method.upcase!
-          @method_callback.call(method)
-        end
+      @request_method = @buffer.scan(/[a-z]+ /i)
+      if @request_method
+        @request_method.chop!
+        @request_method.upcase!
         uri
       elsif @buffer.skip(/HTTP\//i)
         response_http_version
@@ -255,19 +227,14 @@ module HTTPTools
     end
     
     def uri
-      uri = @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]*(?=( |\r\n))/i)
-      if uri
-        fragment = uri.slice!(/#[a-z0-9;\/?:@&=+$,%_.!~*')(-]+\Z/i)
-        if @path_callback && uri =~ /^\//i
-          path = uri.dup
-          query = path.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
-          query ? query.slice!(0) : query = ""
-          @path_callback.call(path, query)
-        end
-        @uri_callback.call(uri) if @uri_callback
-        if fragment && @fragment_callback
-          fragment.slice!(0)
-          @fragment_callback.call(fragment)
+      @request_uri= @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]*(?=( |\r\n))/i)
+      if @request_uri
+        @fragment = @request_uri.slice!(/#[a-z0-9;\/?:@&=+$,%_.!~*')(-]+\Z/i)
+        @fragment.slice!(0) if @fragment
+        if @request_uri =~ /^\//i
+          @path_info = @request_uri.dup
+          @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
+          @query_string ? @query_string.slice!(0) : @query_string = ""
         end
         space_before_http
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
@@ -296,12 +263,9 @@ module HTTPTools
     end
     
     def request_http_version
-      version = @buffer.scan(/[0-9]+\.[0-9x]+\r\n/i)
-      if version
-        if @version_callback
-          version.chop!
-          @version_callback.call(version)
-        end
+      @version = @buffer.scan(/[0-9]+\.[0-9x]+\r\n/i)
+      if @version
+        @version.chop!
         key_or_newline
       elsif @buffer.eos? || @buffer.check(/\d+(\.(\d+\r?)?)?\Z/i)
         :request_http_version
@@ -311,12 +275,9 @@ module HTTPTools
     end
     
     def response_http_version
-      version = @buffer.scan(/[0-9]+\.[0-9x]+ /i)
-      if version
-        if @version_callback
-          version.chop!
-          @version_callback.call(version)
-        end
+      @version = @buffer.scan(/[0-9]+\.[0-9x]+ /i)
+      if @version
+        version.chop!
         status
       elsif @buffer.eos? || @buffer.check(/\d+(\.(\d+)?)?\Z/i)
         :response_http_version
@@ -326,18 +287,18 @@ module HTTPTools
     end
     
     def skip_headers
-      @version_callback.call("0.0") if @version_callback
-      @status = 200
-      @status_callback.call(@status, "") if @status_callback
-      @headers_callback.call(@headers) if @headers_callback
+      @version = "0.0"
+      @status_code = 200
+      @message = ""
+      @headers_callback.call if @headers_callback
       body
     end
     
     def status
       status = @buffer.scan(/\d\d\d[^\000-\037\177]*\r?\n/i)
       if status
-        @status = status.slice!(0, 3).to_i
-        @status_callback.call(@status, status.strip) if @status_callback
+        @status_code = status.slice!(0, 3).to_i
+        @message = status.strip
         key_or_newline
       elsif @buffer.eos? ||
         @buffer.check(/\d(\d(\d( ([^\000-\037\177]+\r?)?)?)?)?\Z/i)
@@ -353,7 +314,7 @@ module HTTPTools
         @last_key.chomp!(KEY_TERMINATOR)
         value
       elsif @buffer.skip(/\n|\r\n/i)
-        @headers_callback.call(@headers) if @headers_callback
+        @headers_callback.call if @headers_callback
         body
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :key_or_newline
@@ -393,10 +354,9 @@ module HTTPTools
     end
     
     def body
-      if @force_no_body || NO_BODY[@status]
+      if @force_no_body || NO_BODY[@status_code]
         end_of_message
       else
-        @body = "" if @body_callback
         length = @headers[CONTENT_LENGTH]
         if length
           @content_left = length.to_i
@@ -413,19 +373,16 @@ module HTTPTools
       if !@buffer.eos?
         chunk = @buffer.string.slice(@buffer.pos, @content_left)
         @stream_callback.call(chunk) if @stream_callback
-        @body << chunk if @body_callback
         chunk_length = chunk.length
         @buffer.pos += chunk_length
         @content_left -= chunk_length
         if @content_left < 1
-          @body_callback.call(@body) if @body_callback
           end_of_message
         else
           :body_with_length
         end
       elsif @content_left < 1 # zero length body
         @stream_callback.call("") if @stream_callback
-        @body_callback.call("") if @body_callback
         end_of_message
       else
         :body_with_length
@@ -436,12 +393,10 @@ module HTTPTools
       decoded, remainder = transfer_encoding_chunked_decode(nil, @buffer)
       if decoded
         @stream_callback.call(decoded) if @stream_callback
-        @body << decoded if @body_callback
       end
       if remainder
         :body_chunked
       else
-        @body_callback.call(@body) if @body_callback
         if @headers[TRAILER] || @force_trailer
           @trailer = {}
           trailer_key_or_newline
@@ -455,7 +410,6 @@ module HTTPTools
       chunk = @buffer.rest
       @buffer.terminate
       @stream_callback.call(chunk) if @stream_callback
-      @body << chunk if @body_callback
       :body_on_close
     end
     
@@ -464,7 +418,7 @@ module HTTPTools
         @last_key.chomp!(KEY_TERMINATOR)
         trailer_value
       elsif @buffer.skip(/\n|\r\n/i)
-        @trailer_callback.call(@trailer) if @trailer_callback
+        @trailer_callback.call if @trailer_callback
         end_of_message
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :trailer_key_or_newline
