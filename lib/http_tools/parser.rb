@@ -58,17 +58,11 @@ module HTTPTools
     # 
     # Create a new HTTPTools::Parser.
     # 
-    def initialize(delegate=nil)
+    def initialize
       @state = :start
       @buffer = StringScanner.new("")
       @buffer_backup_reference = @buffer
       @header = {}
-      if delegate
-        EVENTS.each do |event|
-          id = "on_#{event}"
-          add_listener(event, delegate.method(id)) if delegate.respond_to?(id)
-        end
-      end
     end
     
     # :call-seq: parser.concat(data) -> parser

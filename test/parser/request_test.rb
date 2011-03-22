@@ -419,36 +419,6 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("1.1", version)
   end
   
-  def test_delegate
-    request_class = Class.new
-    request_class.class_eval do
-      attr_writer :context
-      attr_reader :http_method, :path, :headers, :body
-      def on_header
-        @http_method = @context.request_method
-        @path = @context.path_info
-        @headers = @context.header
-        @body = ""
-      end
-      def on_stream(chunk)
-        @body << chunk
-      end
-    end
-    request = request_class.new
-    
-    parser = HTTPTools::Parser.new(request)
-    request.context = parser # FIXME: ugly
-    parser << "POST /test HTTP/1.1\r\n"
-    parser << "Content-Length: 13\r\n"
-    parser << "\r\n"
-    parser << "query=example"
-    
-    assert_equal("POST", request.http_method)
-    assert_equal("/test", request.path)
-    assert_equal({"Content-Length" => "13"}, request.headers)
-    assert_equal("query=example", request.body)
-  end
-  
   def test_invalid_version
     parser = HTTPTools::Parser.new
     
