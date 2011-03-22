@@ -11,9 +11,11 @@ module HTTPTools
   # 
   # Example:
   #   parser = HTTPTools::Parser.new
-  #   parser.on(:status) {|status, message| puts "#{status} #{message}"}
-  #   parser.on(:header) {|header| puts header.inspect}
-  #   parser.on(:body) {|body| puts body}
+  #   parser.on(:header) do |header|
+  #     puts parser.status_code + " " + parser.method
+  #     puts parser.header.inspect
+  #   end
+  #   parser.on(:stream) {|chunk| print chunk}
   #   
   #   parser << "HTTP/1.1 200 OK\r\n"
   #   parser << "Content-Length: 20\r\n\r\n"
@@ -52,24 +54,9 @@ module HTTPTools
     # Allow responses with no status line or headers if it looks like HTML.
     attr_accessor :allow_html_without_header
     
-    # :call-seq: Parser.new(delegate=nil) -> parser
+    # :call-seq: Parser.new -> parser
     # 
     # Create a new HTTPTools::Parser.
-    # 
-    # delegate is an object that will recieve callbacks for events during
-    # parsing. The delegate's methods should be named on_[event name], e.g.
-    # on_status, on_body, etc. See #add_listener for more.
-    # 
-    # Example:
-    #   class ExampleDelegate
-    #     def on_status(status, message)
-    #       puts "#{status} #{message}"
-    #     end
-    #   end
-    #   parser = HTTPTools::Parser.new(ExampleDelegate.new)
-    # 
-    # If a callback is set for an event, it will take precedence over the
-    # delegate for that event.
     # 
     def initialize(delegate=nil)
       @state = :start
@@ -180,7 +167,7 @@ module HTTPTools
     # parser.on(event) {|arg1 [, arg2]| block} -> parser
     # parser.on(event, proc) -> parser
     # 
-    # Available events are :header, :stream, :body, and :error.
+    # Available events are :header, :stream, :trailer, :finish, and :error.
     # 
     # Adding a second callback for an event will overwite the existing callback
     # or delegate.

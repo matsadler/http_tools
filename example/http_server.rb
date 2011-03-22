@@ -82,18 +82,22 @@ module HTTP
     private
     def on_connection(socket)
       parser = HTTPTools::Parser.new
-      env = default_env
+      env = nil
       
-      parser.on(:method) do |method|
-        parser.force_no_body = NO_BODY[method.upcase]
-        env[REQUEST_METHOD] = method
+      parser.on(:header) do
+        parser.force_no_body = NO_BODY[parser.request_method]
+        env = default_env
+        env[REQUEST_METHOD] = parser.request_method
+        env[REQUEST_URI] = parser.request_uri
+        if parser.path_info
+          env[PATH_INFO] = parser.path_info
+          env[QUERY_STRING] = parser.query_string
+        end
+        env[FRAGMENT] = parser.fragment if parser.fragment
+        merge_in_rack_format(env, parser.header)
       end
-      parser.on(:path) {|p, q| env.merge!(PATH_INFO => p, QUERY_STRING => q)}
-      parser.on(:uri) {|uri| env[REQUEST_URI] = uri}
-      parser.on(:fragment) {|fragment| env[FRAGMENT] = fragment}
-      parser.on(:headers) {|headers| merge_in_rack_format(env, headers)}
       parser.on(:stream) {|chunk| env[RACK_INPUT] << chunk}
-      parser.on(:finished) do |remainder|
+      parser.on(:finish) do |remainder|
         env[RACK_INPUT].rewind
         status, headers, body = app.call(env)
         socket << HTTPTools::Builder.response(status, headers)
@@ -123,3 +127,7 @@ module HTTP
     
   end
 end
+
+HTTP::Server.run(Proc.new do |env|
+  [200, {"Content-Length" => 6}, ["hello\n"]]
+end)

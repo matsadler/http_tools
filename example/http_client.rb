@@ -71,20 +71,16 @@ module HTTP
     private
     def request(method, path, request_body=nil, request_headers={}, response_has_body=true)
       parser = HTTPTools::Parser.new
-      parser.allow_html_without_headers = true
+      parser.allow_html_without_header = true
       parser.force_no_body = !response_has_body
       response = nil
       
-      parser.add_listener(:status) {|s, m| response = Response.new(s, m)}
-      parser.add_listener(:headers) do |headers|
-        response.headers = headers
+      parser.add_listener(:header) do
+        response = Response.new(parser.status_code, parser.message)
+        response.headers = parser.header
         yield response if block_given?
       end
-      if block_given?
-        parser.add_listener(:stream) {|chunk| response.receive_chunk(chunk)}
-      else
-        parser.add_listener(:body) {|body| response.body = body}
-      end
+      parser.add_listener(:stream) {|chunk| response.receive_chunk(chunk)}
       
       socket << HTTPTools::Builder.request(method, @host, path, request_headers)
       if request_body
@@ -107,7 +103,7 @@ module HTTP
     attr_reader :status, :message
     attr_accessor :headers, :body
     
-    def initialize(status, message, headers={}, body=nil)
+    def initialize(status, message, headers={}, body="")
       @status = status
       @message = message
       @headers = headers
@@ -120,6 +116,7 @@ module HTTP
     end
     
     def receive_chunk(chunk) # :nodoc:
+      body << chunk
       @stream_callback.call(chunk) if @stream_callback
     end
     
@@ -133,3 +130,6 @@ module HTTP
     end
   end
 end
+
+client = HTTP::Client.new("www.google.co.uk")
+p client.get("/")

@@ -21,9 +21,11 @@ possible.
 === Example
 
   parser = HTTPTools::Parser.new
-  parser.on(:status) {|status, message| puts "#{status} #{message}"}
-  parser.on(:headers) {|headers| puts headers.inspect}
-  parser.on(:body) {|body| puts body}
+  parser.on(:header) do |header|
+    puts parser.status_code + " " + parser.method
+    puts parser.header.inspect
+  end
+  parser.on(:stream) {|chunk| print chunk}
   
   parser << "HTTP/1.1 200 OK\r\n"
   parser << "Content-Length: 20\r\n\r\n"
