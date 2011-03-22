@@ -29,9 +29,12 @@ module HTTP
     CONTENT_LENGTH = "Content-Length".freeze
     WWW_FORM = "application/x-www-form-urlencoded".freeze
     
+    attr_writer :keepalive
+    
     def initialize(host, port=80)
       @host = host
       @port = port
+      @pipeline = []
     end
     
     def socket
@@ -68,34 +71,80 @@ module HTTP
       request(:post, path, body, headers, &block)
     end
     
+    def pipeline
+      @pipelining = true
+      yield self
+      pipeline_requests(@pipeline)
+    ensure
+      @pipelining = false
+    end
+    
+    def keepalive?
+      @keepalive
+    end
+    
+    def keepalive
+      self.keepalive, original = true, keepalive?
+      yield self
+    ensure
+      self.keepalive = original
+    end
+    
     private
-    def request(method, path, request_body=nil, request_headers={}, response_has_body=true)
+    def request(method, path, body=nil, headers={}, response_has_body=true, &b)
+      request = {
+        :method => method,
+        :path => path,
+        :body => body,
+        :headers => headers,
+        :response_has_body => response_has_body,
+        :block => b}
+      if @pipelining
+        @pipeline << request
+        nil
+      else
+        pipeline_requests([request]).first
+      end
+    end
+    
+    def pipeline_requests(requests)
       parser = HTTPTools::Parser.new
       parser.allow_html_without_header = true
-      parser.force_no_body = !response_has_body
-      response = nil
+      responses = []
       
-      parser.add_listener(:header) do
-        response = Response.new(parser.status_code, parser.message)
-        response.headers = parser.header
-        yield response if block_given?
-      end
-      parser.add_listener(:stream) {|chunk| response.receive_chunk(chunk)}
-      
-      socket << HTTPTools::Builder.request(method, @host, path, request_headers)
-      if request_body
-        socket << request_body.read(1024 * 16) until request_body.eof?
-      end
-      
-      until parser.finished?
-        begin
-          parser << socket.sysread(1024 * 16)
-        rescue EOFError
-          parser.finish
-          break
+      parser.on(:finish) do |remainder|
+        if responses.length < requests.length
+          parser.reset
+          parser << remainder.lstrip if remainder
+          throw :reset
         end
       end
-      response
+      parser.on(:header) do
+        request = requests[responses.length]
+        parser.force_no_body = !request[:response_has_body]
+        response = Response.new(parser.status_code, parser.message)
+        response.headers = parser.header
+        parser.on(:stream) {|chunk| response.receive_chunk(chunk)}
+        responses.push(response)
+      end
+      
+      requests.each do |r|
+        socket << HTTPTools::Builder.request(r[:method], @host, r[:path], r[:headers])
+        if body = r[:body]
+          socket << body.read(1024 * 16) until body.eof?
+        end
+      end
+      
+      begin
+        catch(:reset) {parser << socket.sysread(1024 * 16)}
+      rescue EOFError
+        @socket = nil
+        parser.finish
+        break
+      end until parser.finished?
+      
+      @socket = nil unless keepalive?
+      responses
     end
   end
   
@@ -130,6 +179,3 @@ module HTTP
     end
   end
 end
-
-client = HTTP::Client.new("www.google.co.uk")
-p client.get("/")
