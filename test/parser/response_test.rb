@@ -8,7 +8,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:headers) {|v| version = parser.version}
+    parser.add_listener(:header) {|v| version = parser.version}
     
     parser << "HTTP/1.1 200 OK\r\n\r\n"
     
@@ -19,7 +19,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:headers) {|v| version = parser.version}
+    parser.add_listener(:header) {|v| version = parser.version}
     
     parser << "HTTP/1.x 200 OK\r\n\r\n"
     
@@ -30,7 +30,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -45,7 +45,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -60,7 +60,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -75,7 +75,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version, code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       version = parser.version
       code = parser.status_code
       message = parser.message
@@ -93,7 +93,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -108,7 +108,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -123,7 +123,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code, message = parser.status_code, parser.message
     end
     
@@ -139,7 +139,7 @@ class ResponseTest < Test::Unit::TestCase
     parser.force_no_body = true
     headers = nil
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     
     parser << "HTTP/1.1 200 OK\r\n"
     parser << "Content-Length: 20\r\n"
@@ -153,7 +153,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     headers = nil
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     
     parser << "HTTP/1.1 200 OK\r\n"
     parser << "Server:: Harris Associates L.P.\r\n"
@@ -169,7 +169,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     headers = nil
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     
     parser << "HTTP/1.1 200 OK\r\n"
     parser << "X-Powered-By: PHP/5.3.5\r\n"
@@ -185,7 +185,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     headers = nil
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     
     parser << "HTTP/1.1 200 OK\r\n"
     parser << "X-Empty: \r\n"
@@ -201,10 +201,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -225,7 +225,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     headers = nil
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     
     parser << "HTTP/1.1 200 OK\r\n"
     parser << "Set-Cookie: foo=bar\r\n"
@@ -239,10 +239,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -265,10 +265,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -290,10 +290,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -316,10 +316,10 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     code, message, headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "HTTP/1.1 200 OK\r\n"
@@ -347,10 +347,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = []
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -372,10 +372,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -398,10 +398,10 @@ class ResponseTest < Test::Unit::TestCase
     stream = []
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk; stream.push(chunk)}
     
@@ -423,10 +423,10 @@ class ResponseTest < Test::Unit::TestCase
     stream = []
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk; stream.push(chunk)}
     
@@ -447,10 +447,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -476,10 +476,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -500,7 +500,7 @@ class ResponseTest < Test::Unit::TestCase
     headers = nil
     body = ""
     
-    parser.add_listener(:headers) {headers = parser.headers}
+    parser.add_listener(:header) {headers = parser.header}
     parser.add_listener(:stream) {|chunk| body << chunk}
     
     parser << "HTTP/1.1 200 OK\r\n"
@@ -519,10 +519,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -542,10 +542,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -567,10 +567,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -593,10 +593,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = []
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -619,10 +619,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = []
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -646,10 +646,10 @@ class ResponseTest < Test::Unit::TestCase
     code, message, headers = nil
     body = []
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -683,13 +683,13 @@ class ResponseTest < Test::Unit::TestCase
     version, code, message, headers = nil
     body = ""
     
-    parser.allow_html_without_headers = true
+    parser.allow_html_without_header = true
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       version = parser.version
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     
@@ -709,13 +709,13 @@ class ResponseTest < Test::Unit::TestCase
     code, message, remainder = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
-    parser.add_listener(:finished) {|r| remainder = r}
+    parser.add_listener(:finish) {|r| remainder = r}
     
     parser << "HTTP/1.1 200 OK\r\nContent-Length: 20\r\n\r\n"
     parser << "<h1>Hello world</h1>HTTP/1.1 404 Not Found\r\n"
@@ -732,13 +732,13 @@ class ResponseTest < Test::Unit::TestCase
     code, message, remainder = nil
     body = ""
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.headers
+      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
-    parser.add_listener(:finished) {|r| remainder = r}
+    parser.add_listener(:finish) {|r| remainder = r}
     
     parser << "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\nHTTP/1.1 404 Not Found\r\n"

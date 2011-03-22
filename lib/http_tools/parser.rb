@@ -12,7 +12,7 @@ module HTTPTools
   # Example:
   #   parser = HTTPTools::Parser.new
   #   parser.on(:status) {|status, message| puts "#{status} #{message}"}
-  #   parser.on(:headers) {|headers| puts headers.inspect}
+  #   parser.on(:header) {|header| puts header.inspect}
   #   parser.on(:body) {|body| puts body}
   #   
   #   parser << "HTTP/1.1 200 OK\r\n"
@@ -35,13 +35,13 @@ module HTTPTools
     CONNECTION = "Connection".freeze
     CLOSE = "close".freeze
     CHUNKED = "chunked".freeze
-    EVENTS = %W{headers stream trailers finished error}.map do |event|
+    EVENTS = %W{header stream trailer finish error}.map do |event|
       event.freeze
     end.freeze
     
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
-      :fragment, :version, :status_code, :message, :headers, :trailer
+      :fragment, :version, :status_code, :message, :header, :trailer
     
     # Force parser to expect and parse a trailer when Trailer header missing.
     attr_accessor :force_trailer
@@ -50,7 +50,7 @@ module HTTPTools
     attr_accessor :force_no_body
     
     # Allow responses with no status line or headers if it looks like HTML.
-    attr_accessor :allow_html_without_headers
+    attr_accessor :allow_html_without_header
     
     # :call-seq: Parser.new(delegate=nil) -> parser
     # 
@@ -75,7 +75,7 @@ module HTTPTools
       @state = :start
       @buffer = StringScanner.new("")
       @buffer_backup_reference = @buffer
-      @headers = {}
+      @header = {}
       if delegate
         EVENTS.each do |event|
           id = "on_#{event}"
@@ -126,8 +126,8 @@ module HTTPTools
     def finish
       if @state == :body_on_close
         @state = end_of_message
-      elsif @state == :body_chunked && @headers[CONNECTION] == CLOSE &&
-        !@headers[TRAILER] && @buffer.eos?
+      elsif @state == :body_chunked && @header[CONNECTION] == CLOSE &&
+        !@header[TRAILER] && @buffer.eos?
         @state = end_of_message
       elsif @state == :start && @buffer.string.length < 1
         raise EmptyMessageError.new("Message empty")
@@ -168,7 +168,7 @@ module HTTPTools
       @fragment = nil
       @version = nil
       @status_code = nil
-      @headers = {}
+      @header = {}
       @trailer = {}
       @last_key = nil
       @content_left = nil
@@ -180,20 +180,20 @@ module HTTPTools
     # parser.on(event) {|arg1 [, arg2]| block} -> parser
     # parser.on(event, proc) -> parser
     # 
-    # Available events are :headers, :stream, :body, and :error.
+    # Available events are :header, :stream, :body, and :error.
     # 
     # Adding a second callback for an event will overwite the existing callback
     # or delegate.
     # 
     # Events:
-    # [headers]    Called when headers are complete
+    # [header]     Called when headers are complete
     # 
     # [stream]     Supplied with one argument, the last chunk of body data fed
     #              in to the parser as a String, e.g. "<h1>Hello"
     # 
     # [trailer]    Called on the completion of the trailer, if present
     # 
-    # [finished]   Supplied with one argument, any data left in the parser's
+    # [finish]     Supplied with one argument, any data left in the parser's
     #              buffer after the end of the HTTP message (likely nil, but
     #              possibly the start of the next message)
     # 
@@ -219,8 +219,8 @@ module HTTPTools
         response_http_version
       elsif @buffer.check(/[a-z]*\Z/i)
         :start
-      elsif @allow_html_without_headers && @buffer.check(/\s*</i)
-        skip_headers
+      elsif @allow_html_without_header && @buffer.check(/\s*</i)
+        skip_header
       else
         raise ParseError.new("Protocol or method not recognised")
       end
@@ -286,11 +286,11 @@ module HTTPTools
       end
     end
     
-    def skip_headers
+    def skip_header
       @version = "0.0"
       @status_code = 200
       @message = ""
-      @headers_callback.call if @headers_callback
+      @header_callback.call if @header_callback
       body
     end
     
@@ -314,7 +314,7 @@ module HTTPTools
         @last_key.chomp!(KEY_TERMINATOR)
         value
       elsif @buffer.skip(/\n|\r\n/i)
-        @headers_callback.call if @headers_callback
+        @header_callback.call if @header_callback
         body
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :key_or_newline
@@ -341,9 +341,9 @@ module HTTPTools
       if value
         value.chop!
         if ARRAY_VALUE_HEADERS[@last_key]
-          @headers.fetch(@last_key) {@headers[@last_key] = []}.push(value)
+          @header.fetch(@last_key) {@header[@last_key] = []}.push(value)
         else
-          @headers[@last_key] = value
+          @header[@last_key] = value
         end
         key_or_newline
       elsif @buffer.eos? || @buffer.check(/[^\000\n\177]+\r?\Z/i)
@@ -357,11 +357,11 @@ module HTTPTools
       if @force_no_body || NO_BODY[@status_code]
         end_of_message
       else
-        length = @headers[CONTENT_LENGTH]
+        length = @header[CONTENT_LENGTH]
         if length
           @content_left = length.to_i
           body_with_length
-        elsif @headers[TRANSFER_ENCODING] == CHUNKED
+        elsif @header[TRANSFER_ENCODING] == CHUNKED
           body_chunked
         else
           body_on_close
@@ -397,7 +397,7 @@ module HTTPTools
       if remainder
         :body_chunked
       else
-        if @headers[TRAILER] || @force_trailer
+        if @header[TRAILER] || @force_trailer
           @trailer = {}
           trailer_key_or_newline
         else
@@ -446,8 +446,8 @@ module HTTPTools
     def end_of_message
       raise EndOfMessageError.new("Message ended") if @state == :end_of_message
       remainder = @buffer.respond_to?(:rest) ? @buffer.rest : @buffer
-      if @finished_callback
-        @finished_callback.call((remainder if remainder.length > 0))
+      if @finish_callback
+        @finish_callback.call((remainder if remainder.length > 0))
       end
       :end_of_message
     end

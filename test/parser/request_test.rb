@@ -8,7 +8,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     result = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       result = parser.request_method
     end
     
@@ -21,7 +21,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     result = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       result = parser.request_method
     end
     
@@ -34,7 +34,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     path, query = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       path, query = parser.path_info, parser.query_string
     end
     
@@ -48,7 +48,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     path, query = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       path, query = parser.path_info, parser.query_string
     end
     
@@ -62,7 +62,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     path, query = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       path, query = parser.path_info, parser.query_string
     end
     
@@ -84,7 +84,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     result = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       result = parser.request_uri
     end
     
@@ -97,7 +97,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     result = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       result = parser.path_info
     end
     
@@ -112,7 +112,7 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     query = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       uri = parser.request_uri
       path = parser.path_info
       query = parser.query_string
@@ -130,7 +130,7 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     fragment = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       path = parser.path_info
       fragment = parser.fragment
     end
@@ -146,7 +146,7 @@ class RequestTest < Test::Unit::TestCase
     uri = nil
     fragment = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       uri = parser.request_uri
       fragment = parser.fragment
     end
@@ -163,10 +163,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "GET / HTTP/1.1\r\n"
@@ -184,10 +184,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "GET / HTTP/1.1\r\n"
@@ -206,10 +206,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "GE"
@@ -232,10 +232,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "POST"
@@ -262,10 +262,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     request = "GET /foo/bar HTTP/1.1\r\n"
@@ -282,7 +282,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     method = nil
     
-    parser.add_listener(:headers) {method = parser.request_method}
+    parser.add_listener(:header) {method = parser.request_method}
     
     parser << "UNICORNS / HTTP/1.1\r\n\r\n"
     
@@ -295,10 +295,10 @@ class RequestTest < Test::Unit::TestCase
     path = nil
     headers = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
     end
     
     parser << "GET /\r\nHost: www.example.com\r\n\r\n"
@@ -318,7 +318,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:headers) {version = parser.version}
+    parser.add_listener(:header) {version = parser.version}
     
     parser << "GET / HTTP/1.1\r\n\r\n"
     
@@ -335,7 +335,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:headers) {version = parser.version}
+    parser.add_listener(:header) {version = parser.version}
     
     parser << "GET / HTTP/1.x\r\n\r\n"
     
@@ -349,10 +349,10 @@ class RequestTest < Test::Unit::TestCase
     headers = nil
     calls = 0
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       method = parser.request_method
       path = parser.path_info
-      headers = parser.headers
+      headers = parser.header
       calls += 1
     end
     
@@ -399,7 +399,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     result = nil
     
-    parser.add_listener(:headers) do
+    parser.add_listener(:header) do
       result = parser.request_method
     end
     
@@ -412,7 +412,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:headers) {|v| version = parser.version}
+    parser.add_listener(:header) {|v| version = parser.version}
     
     parser << "GET / http/1.1\r\n\r\n"
     
@@ -424,10 +424,10 @@ class RequestTest < Test::Unit::TestCase
     request_class.class_eval do
       attr_writer :context
       attr_reader :http_method, :path, :headers, :body
-      def on_headers
+      def on_header
         @http_method = @context.request_method
         @path = @context.path_info
-        @headers = @context.headers
+        @headers = @context.header
         @body = ""
       end
       def on_stream(chunk)
