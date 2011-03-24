@@ -8,7 +8,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:header) {|v| version = parser.version}
+    parser.add_listener(:header) {version = parser.version}
     
     parser << "HTTP/1.1 200 OK\r\n\r\n"
     
@@ -19,7 +19,7 @@ class ResponseTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:header) {|v| version = parser.version}
+    parser.add_listener(:header) {version = parser.version}
     
     parser << "HTTP/1.x 200 OK\r\n\r\n"
     

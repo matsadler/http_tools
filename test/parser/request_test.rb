@@ -412,7 +412,7 @@ class RequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     version = nil
     
-    parser.add_listener(:header) {|v| version = parser.version}
+    parser.add_listener(:header) {version = parser.version}
     
     parser << "GET / http/1.1\r\n\r\n"
     
