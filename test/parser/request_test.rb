@@ -328,7 +328,7 @@ class RequestTest < Test::Unit::TestCase
   def test_protocol_without_version
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP\r\n"}
+    assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP\r\n\r\n"}
   end
   
   def test_one_dot_x_protocol_version
