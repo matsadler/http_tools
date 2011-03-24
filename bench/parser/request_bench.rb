@@ -28,20 +28,18 @@ Benchmark.bm(41) do |x|
     end
   end
   
-  x.report("HTTPTools::Parser (reset, with delegate)") do
-    class TestDelegate
-      def on_method(arg)
-      end
-      def on_path(arg, arg2)
-      end
-      def on_headers(arg)
+  begin
+    require 'rubygems'
+    require 'http/parser'
+    x.report("Http::Parser") do
+      10_000.times do
+        parser = Http::Parser.new
+        parser.on_headers_complete = Proc.new {}
+        parser.on_message_complete = Proc.new {}
+        parser << request
       end
     end
-    parser = HTTPTools::Parser.new(TestDelegate.new)
-    10_000.times do
-       parser << request
-       parser.reset
-    end
+  rescue LoadError
   end
   
   begin

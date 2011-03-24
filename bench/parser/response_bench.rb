@@ -18,4 +18,16 @@ Benchmark.bm(25) do |x|
        parser.reset
     end
   end
+  
+  begin
+    require 'rubygems'
+    require 'http/parser'
+    x.report("Http::Parser") do
+      10_000.times do
+        parser = Http::Parser.new
+        parser << response
+      end
+    end
+  rescue LoadError
+  end
 end
