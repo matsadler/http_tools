@@ -151,7 +151,7 @@ module HTTPTools
         begin
           chunk = scanner.rest.slice(0, chunk_length)
           scanner.pos += chunk_length
-          if chunk && scanner.skip(/\n|\r\n/i)
+          if chunk && scanner.skip(/\r?\n/i)
             decoded << chunk
           else
             scanner.pos = start_pos

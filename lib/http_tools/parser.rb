@@ -276,13 +276,13 @@ module HTTPTools
     end
     
     def status
-      status = @buffer.scan(/\d\d\d[^\000-\037\177]*\r?\n/i)
+      status = @buffer.scan(/\d\d\d[^\x00-\x1f\x7f]*\r?\n/i)
       if status
         @status_code = status.slice!(0, 3).to_i
         @message = status.strip
         key_or_newline
       elsif @buffer.eos? ||
-        @buffer.check(/\d(\d(\d( ([^\000-\037\177]+\r?)?)?)?)?\Z/i)
+        @buffer.check(/\d(\d(\d( ([^\x00-\x1f\x7f]+\r?)?)?)?)?\Z/i)
         :status
       else
         raise ParseError.new("Invalid status line")
@@ -294,7 +294,7 @@ module HTTPTools
       if @last_key
         @last_key.chomp!(KEY_TERMINATOR)
         value
-      elsif @buffer.skip(/\n|\r\n/i)
+      elsif @buffer.skip(/\r?\n/i)
         @header_callback.call if @header_callback
         body
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
@@ -308,9 +308,9 @@ module HTTPTools
     end
     
     def skip_bad_header
-      if @buffer.skip(/[^\000\n\177]*\n/)
+      if @buffer.skip(/[^\x00\n\x7f]*\n/)
         key_or_newline
-      elsif @buffer.check(/[^\000\n\177]+\Z/)
+      elsif @buffer.check(/[^\x00\n\x7f]+\Z/)
         :skip_bad_header
       else
         raise ParseError.new("Illegal character in field name")
@@ -318,7 +318,7 @@ module HTTPTools
     end
     
     def value
-      value = @buffer.scan(/[^\000\n\177]*\r?\n/i)
+      value = @buffer.scan(/[^\x00\n\x7f]*\r?\n/i)
       if value
         value.chop!
         if ARRAY_VALUE_HEADERS[@last_key]
@@ -327,7 +327,7 @@ module HTTPTools
           @header[@last_key] = value
         end
         key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[^\000\n\177]+\r?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\r?\Z/i)
         :value
       else
         raise ParseError.new("Illegal character in field body")
@@ -398,7 +398,7 @@ module HTTPTools
       if @last_key = @buffer.scan(/[ -9;-~]+: /i)
         @last_key.chomp!(KEY_TERMINATOR)
         trailer_value
-      elsif @buffer.skip(/\n|\r\n/i)
+      elsif @buffer.skip(/\r?\n/i)
         @trailer_callback.call if @trailer_callback
         end_of_message
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
@@ -417,7 +417,7 @@ module HTTPTools
         value.chop!
         @trailer[@last_key] = value
         trailer_key_or_newline
-      elsif @buffer.eos? || @buffer.check(/[^\000\n\177]+\r?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\r?\Z/i)
         :trailer_value
       else
         raise ParseError.new("Illegal character in field body")
