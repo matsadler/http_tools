@@ -41,6 +41,27 @@ module HTTPTools
       event.freeze
     end.freeze
     
+    REQUEST_METHOD = "REQUEST_METHOD".freeze
+    PATH_INFO = "PATH_INFO".freeze
+    QUERY_STRING = "QUERY_STRING".freeze
+    REQUEST_URI = "REQUEST_URI".freeze
+    FRAGMENT = "FRAGMENT".freeze
+    
+    PROTOTYPE_ENV = {
+      "SCRIPT_NAME" => "".freeze,
+      PATH_INFO => "/".freeze,
+      QUERY_STRING => "".freeze,
+      "rack.version" => [1, 1].freeze,
+      "rack.url_scheme" => "http".freeze,
+      "rack.errors" => STDERR,
+      "rack.multithread" => false,
+      "rack.multiprocess" => false,
+      "rack.run_once" => false}.freeze
+    
+    HTTP_ = "HTTP_".freeze
+    LOWERCASE = "a-z-".freeze
+    UPPERCASE = "A-Z_".freeze
+    
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
       :fragment, :version, :status_code, :message, :header, :trailer
@@ -63,6 +84,7 @@ module HTTPTools
       @buffer = StringScanner.new("")
       @buffer_backup_reference = @buffer
       @header = {}
+      @trailer = {}
     end
     
     # :call-seq: parser.concat(data) -> parser
@@ -80,6 +102,29 @@ module HTTPTools
       self
     end
     alias << concat
+    
+    # :call-seq: parser.env -> hash or nil
+    # 
+    # Returns a Rack compatible environment hash. Will return nil if called
+    # before headers are complete.
+    # 
+    # The following are not supplied, and must be added to make the environment
+    # hash fully Rack compliant: SERVER_NAME, SERVER_PORT, rack.input
+    # 
+    def env
+      return unless @header_complete
+      env = PROTOTYPE_ENV.merge(
+        REQUEST_METHOD => @request_method,
+        REQUEST_URI => @request_uri)
+      if @path_info
+        env[PATH_INFO] = @path_info
+        env[QUERY_STRING] = @query_string
+      end
+      env[FRAGMENT] = @fragment if @fragment
+      @header.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
+      @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
+      env
+    end
     
     # :call-seq: parser.finish -> parser
     # 
@@ -271,6 +316,7 @@ module HTTPTools
       @version = "0.0"
       @status_code = 200
       @message = ""
+      @header_complete = true
       @header_callback.call if @header_callback
       body
     end
@@ -295,6 +341,7 @@ module HTTPTools
         @last_key.chomp!(KEY_TERMINATOR)
         value
       elsif @buffer.skip(/\r?\n/i)
+        @header_complete = true
         @header_callback.call if @header_callback
         body
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
@@ -379,7 +426,6 @@ module HTTPTools
         :body_chunked
       else
         if @header[TRAILER] || @force_trailer
-          @trailer = {}
           trailer_key_or_newline
         else
           end_of_message

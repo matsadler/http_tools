@@ -458,4 +458,67 @@ class RequestTest < Test::Unit::TestCase
     assert_instance_of(HTTPTools::ParseError, error)
   end
   
+  def test_env
+    parser = HTTPTools::Parser.new
+    env = nil
+    parser.on(:header) {env = parser.env}
+    
+    parser << "GET /test?q=foo HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Accept: text/html\r\n"
+    parser << "\r\n"
+    
+    assert_equal("GET", env["REQUEST_METHOD"])
+    assert_equal("", env["SCRIPT_NAME"])
+    assert_equal("/test", env["PATH_INFO"])
+    assert_equal("q=foo", env["QUERY_STRING"])
+    assert_equal(nil, env["SERVER_NAME"])
+    assert_equal(nil, env["SERVER_PORT"])
+    assert_equal("www.example.com", env["HTTP_HOST"])
+    assert_equal("text/html", env["HTTP_ACCEPT"])
+    
+    assert_equal([1,1], env["rack.version"])
+    assert_equal("http", env["rack.url_scheme"])
+    assert_equal(nil, env["rack.input"])
+    assert_equal(STDERR, env["rack.errors"])
+    assert_equal(false, env["rack.multithread"])
+    assert_equal(false, env["rack.multiprocess"])
+    assert_equal(false, env["rack.run_once"])
+  end
+  
+  def test_env_with_trailer
+    parser = HTTPTools::Parser.new
+    env = nil
+    parser.on(:finish) {env = parser.env}
+    
+    parser << "POST /submit HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Checksum\r\n"
+    parser << "\r\n"
+    parser << "5\r\nHello\r\n"
+    parser << "6\r\n world\r\n0\r\n"
+    parser << "X-Checksum: 3e25960a79dbc69b674cd4ec67a72c62\r\n"
+    parser << "\r\n"
+    
+    assert_equal("POST", env["REQUEST_METHOD"])
+    assert_equal("", env["SCRIPT_NAME"])
+    assert_equal("/submit", env["PATH_INFO"])
+    assert_equal("", env["QUERY_STRING"])
+    assert_equal(nil, env["SERVER_NAME"])
+    assert_equal(nil, env["SERVER_PORT"])
+    assert_equal("www.example.com", env["HTTP_HOST"])
+    assert_equal("chunked", env["HTTP_TRANSFER_ENCODING"])
+    assert_equal("X-Checksum", env["HTTP_TRAILER"])
+    assert_equal("3e25960a79dbc69b674cd4ec67a72c62", env["HTTP_X_CHECKSUM"])
+    
+    assert_equal([1,1], env["rack.version"])
+    assert_equal("http", env["rack.url_scheme"])
+    assert_equal(nil, env["rack.input"])
+    assert_equal(STDERR, env["rack.errors"])
+    assert_equal(false, env["rack.multithread"])
+    assert_equal(false, env["rack.multiprocess"])
+    assert_equal(false, env["rack.run_once"])
+  end
+  
 end
