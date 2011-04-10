@@ -1,4 +1,3 @@
-require 'uri'
 require 'socket'
 require 'stringio'
 require 'rubygems'
@@ -6,23 +5,21 @@ require 'http_tools'
 
 module HTTP
   class Server
-    SERVER_NAME = "SERVER_NAME".freeze
-    SERVER_PORT = "SERVER_PORT".freeze
     RACK_INPUT = "rack.input".freeze
     NO_BODY = {"GET" => true, "HEAD" => true}
-    
-    attr_reader :app, :host, :port, :server
-    attr_accessor :timeout, :default_env, :multithread
+    CONNECTION = "Connection".freeze
+    KEEP_ALIVE = "Keep-Alive".freeze
+    CLOSE = "close".freeze
+    ONE_ONE = "1.1".freeze
     
     def initialize(app, options={})
+      host = options[:host] || options[:Host] || "0.0.0.0"
+      port = (options[:port] || options[:Port] || 9292).to_s
       @app = app
-      @host = options[:host] || options[:Host] || "0.0.0.0"
-      @port = (options[:port] || options[:Port] || 8080).to_s
-      @default_env = {SERVER_NAME => host, SERVER_PORT => port}
-      @default_env.merge!(options[:default_env]) if options[:default_env]
-      @multithread = options[:multithread]
+      @instance_env = {"SERVER_NAME" => host, "SERVER_PORT" => port,
+        "rack.multithread" => true}
       @server = TCPServer.new(host, port)
-      @timeout = 10
+      @server.listen(1024)
     end
     
     def self.run(app, options={})
@@ -30,12 +27,13 @@ module HTTP
     end
     
     def listen
-      while socket = server.accept
-        thread = Thread.new {on_connection(socket)}
-        begin
-          thread.join unless multithread
-        rescue StandardError, LoadError, SyntaxError
-          socket.close rescue nil
+      while socket = @server.accept
+        Thread.new do
+          begin
+            on_connection(socket)
+          rescue StandardError, LoadError, SyntaxError => e
+            STDERR.puts("#{e.class}: #{e.message} #{e.backtrace.join("\n")}")
+          end
         end
       end
     end
@@ -43,40 +41,42 @@ module HTTP
     private
     def on_connection(socket)
       parser = HTTPTools::Parser.new
-      env = nil
+      env, input = nil
       
       parser.on(:header) do
         parser.force_no_body = NO_BODY[parser.request_method]
-        env = parser.env.merge!(RACK_INPUT => StringIO.new).merge!(@default_env)
+        input = StringIO.new
+        env = parser.env.merge!(RACK_INPUT => input).merge!(@instance_env)
       end
-      parser.on(:stream) {|chunk| env[RACK_INPUT] << chunk}
+      parser.on(:stream) {|chunk| input << chunk}
       parser.on(:finish) do |remainder|
-        env[RACK_INPUT].rewind
-        status, headers, body = app.call(env)
-        socket << HTTPTools::Builder.response(status, headers)
+        input.rewind
+        status, header, body = @app.call(env)
+        keep_alive = keep_alive?(parser.version, parser.header[CONNECTION])
+        header[CONNECTION] = keep_alive ? KEEP_ALIVE : CLOSE
+        socket << HTTPTools::Builder.response(status, header)
         body.each {|chunk| socket << chunk}
-        parser.reset
-        parser << remainder.lstrip if remainder
-        throw :reset
+        body.close if body.respond_to?(:close)
+        if keep_alive
+          parser.reset
+          parser << remainder.lstrip if remainder
+          throw :reset
+        end
       end
       
       begin
-        readable, = select([socket], nil, nil, timeout)
-        unless readable
-          socket.close
-          break
-        end
+        readable, = select([socket], nil, nil, 30)
+        break unless readable
         catch(:reset) {parser << socket.read_nonblock(1024 * 16)}
       rescue EOFError
-        socket.close
         break
       end until parser.finished?
-      nil
+      socket.close
+    end
+    
+    def keep_alive?(http_version, connection)
+      http_version == ONE_ONE && connection != CLOSE || connection == KEEP_ALIVE
     end
     
   end
 end
-
-HTTP::Server.run(Proc.new do |env|
-  [200, {"Content-Length" => 6}, ["hello\n"]]
-end)
