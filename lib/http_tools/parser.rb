@@ -12,7 +12,7 @@ module HTTPTools
   # Example:
   #   parser = HTTPTools::Parser.new
   #   parser.on(:header) do |header|
-  #     puts parser.status_code + " " + parser.method
+  #     puts parser.status_code + " " + parser.request_method
   #     puts parser.header.inspect
   #   end
   #   parser.on(:stream) {|chunk| print chunk}
@@ -37,9 +37,7 @@ module HTTPTools
     CONNECTION = "Connection".freeze
     CLOSE = "close".freeze
     CHUNKED = "chunked".freeze
-    EVENTS = %W{header stream trailer finish error}.map do |event|
-      event.freeze
-    end.freeze
+    EVENTS = %W{header stream trailer finish error}.map {|e| e.freeze}.freeze
     
     REQUEST_METHOD = "REQUEST_METHOD".freeze
     PATH_INFO = "PATH_INFO".freeze

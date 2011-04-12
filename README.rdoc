@@ -22,7 +22,7 @@ possible.
 
   parser = HTTPTools::Parser.new
   parser.on(:header) do |header|
-    puts parser.status_code + " " + parser.method
+    puts parser.status_code + " " + parser.request_method
     puts parser.header.inspect
   end
   parser.on(:stream) {|chunk| print chunk}
