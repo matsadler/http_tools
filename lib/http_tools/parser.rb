@@ -380,7 +380,9 @@ module HTTPTools
     end
     
     def body
-      if @force_no_body || NO_BODY[@status_code]
+      if @request_method &&
+        !(@header.key?(CONTENT_LENGTH) || @header.key?(TRANSFER_ENCODING)) ||
+        NO_BODY[@status_code] || @force_no_body
         end_of_message
       else
         length = @header[CONTENT_LENGTH]

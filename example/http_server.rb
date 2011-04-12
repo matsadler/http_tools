@@ -6,7 +6,6 @@ require 'http_tools'
 module HTTP
   class Server
     RACK_INPUT = "rack.input".freeze
-    NO_BODY = {"GET" => true, "HEAD" => true}
     CONNECTION = "Connection".freeze
     KEEP_ALIVE = "Keep-Alive".freeze
     CLOSE = "close".freeze
@@ -44,7 +43,6 @@ module HTTP
       env, input = nil
       
       parser.on(:header) do
-        parser.force_no_body = NO_BODY[parser.request_method]
         input = StringIO.new
         env = parser.env.merge!(RACK_INPUT => input).merge!(@instance_env)
       end

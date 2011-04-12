@@ -342,6 +342,31 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("1.x", version)
   end
   
+  def test_finish_without_body_trigger
+    parser = HTTPTools::Parser.new
+    
+    parser << "GET / HTTP/1.1\r\n\r\n"
+    
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_finish_with_content_length_body_trigger
+    parser = HTTPTools::Parser.new
+    
+    parser << "GET / HTTP/1.1\r\n"
+    parser << "Content-Length: 5\r\n\r\n"
+    
+    assert(!parser.finished?, "parser should not be finished")
+  end
+  
+  def test_finish_with_transfer_encoding_body_trigger
+    parser = HTTPTools::Parser.new
+    parser << "GET / HTTP/1.1\r\n"
+    parser << "Transfer-Encoding: chunked\r\n\r\n"
+    
+    assert(!parser.finished?, "parser should not be finished")
+  end
+  
   def test_reset
     parser = HTTPTools::Parser.new
     method = nil
