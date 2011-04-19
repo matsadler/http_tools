@@ -80,7 +80,6 @@ module HTTPTools
     def initialize
       @state = :start
       @buffer = StringScanner.new("")
-      @buffer_backup_reference = @buffer
       @header = {}
       @trailer = {}
     end
@@ -182,7 +181,6 @@ module HTTPTools
     # 
     def reset
       @state = :start
-      @buffer = @buffer_backup_reference
       @buffer.string.replace("")
       @buffer.reset
       @request_method = nil
@@ -472,9 +470,8 @@ module HTTPTools
     
     def end_of_message
       raise EndOfMessageError.new("Message ended") if @state == :end_of_message
-      remainder = @buffer.respond_to?(:rest) ? @buffer.rest : @buffer
       if @finish_callback
-        @finish_callback.call((remainder if remainder.length > 0))
+        @finish_callback.call((@buffer.rest if @buffer.rest_size > 0))
       end
       :end_of_message
     end
