@@ -47,7 +47,7 @@ module HTTP
         env = parser.env.merge!(RACK_INPUT => input).merge!(@instance_env)
       end
       parser.on(:stream) {|chunk| input << chunk}
-      parser.on(:finish) do |remainder|
+      parser.on(:finish) do
         input.rewind
         status, header, body = @app.call(env)
         keep_alive = keep_alive?(parser.version, parser.header[CONNECTION])
@@ -55,11 +55,7 @@ module HTTP
         socket << HTTPTools::Builder.response(status, header)
         body.each {|chunk| socket << chunk}
         body.close if body.respond_to?(:close)
-        if keep_alive
-          parser.reset
-          parser << remainder.lstrip if remainder
-          throw :reset
-        end
+        parser.reset << parser.rest.lstrip and throw :reset if keep_alive
       end
       
       begin

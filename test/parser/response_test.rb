@@ -715,7 +715,7 @@ class ResponseTest < Test::Unit::TestCase
       headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
-    parser.add_listener(:finish) {|r| remainder = r}
+    parser.add_listener(:finish) {remainder = parser.rest}
     
     parser << "HTTP/1.1 200 OK\r\nContent-Length: 20\r\n\r\n"
     parser << "<h1>Hello world</h1>HTTP/1.1 404 Not Found\r\n"
@@ -738,7 +738,7 @@ class ResponseTest < Test::Unit::TestCase
       headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
-    parser.add_listener(:finish) {|r| remainder = r}
+    parser.add_listener(:finish) {remainder = parser.rest}
     
     parser << "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\nHTTP/1.1 404 Not Found\r\n"
@@ -747,6 +747,29 @@ class ResponseTest < Test::Unit::TestCase
     assert_equal("OK", message)
     assert_equal("<h1>Hello world</h1>", body)
     assert_equal("HTTP/1.1 404 Not Found\r\n", remainder)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_finshed_without_rest
+    parser = HTTPTools::Parser.new
+    code, message, remainder = nil
+    body = ""
+    
+    parser.add_listener(:header) do
+      code = parser.status_code
+      message = parser.message
+      headers = parser.header
+    end
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    parser.add_listener(:finish) {remainder = parser.rest}
+    
+    parser << "HTTP/1.1 200 OK\r\nContent-Length: 20\r\n\r\n"
+    parser << "<h1>Hello world</h1>"
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert_equal("", remainder)
     assert(parser.finished?, "parser should be finished")
   end
   

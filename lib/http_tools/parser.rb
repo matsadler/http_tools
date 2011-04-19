@@ -173,6 +173,14 @@ module HTTPTools
       @state == :end_of_message
     end
     
+    # :call-seq: parser.rest -> string
+    # 
+    # Returns unconsumed data in the parser's buffer.
+    # 
+    def rest
+      @buffer.rest
+    end
+    
     # :call-seq: parser.reset -> parser
     # 
     # Reset the parser so it can be used to process a new request.
@@ -213,9 +221,9 @@ module HTTPTools
     # 
     # [trailer]    Called on the completion of the trailer, if present
     # 
-    # [finish]     Supplied with one argument, any data left in the parser's
-    #              buffer after the end of the HTTP message (likely nil, but
-    #              possibly the start of the next message)
+    # [finish]     Called on completion of the entire message. Any unconsumed
+    #              data (such as the start of the next message with keepalive)
+    #              can be retrieved with #rest
     # 
     # [error]      Supplied with one argument, an error encountered while
     #              parsing as a HTTPTools::ParseError. If a listener isn't
@@ -460,9 +468,7 @@ module HTTPTools
     
     def end_of_message
       raise EndOfMessageError.new("Message ended") if @state == :end_of_message
-      if @finish_callback
-        @finish_callback.call((@buffer.rest if @buffer.rest_size > 0))
-      end
+      @finish_callback.call if @finish_callback
       :end_of_message
     end
     
