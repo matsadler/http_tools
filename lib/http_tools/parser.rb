@@ -354,7 +354,7 @@ module HTTPTools
       value = @buffer.scan(/[^\x00\n\x7f]*\n/i)
       if value
         value.chop!
-        if ARRAY_VALUE_HEADERS[@last_key]
+        if ARRAY_VALUE_HEADERS.key?(@last_key)
           @header.fetch(@last_key) {@header[@last_key] = []}.push(value)
         else
           @header[@last_key] = value
@@ -370,7 +370,7 @@ module HTTPTools
     def body
       if @request_method &&
         !(@header.key?(CONTENT_LENGTH) || @header.key?(TRANSFER_ENCODING)) ||
-        NO_BODY[@status_code] || @force_no_body
+        NO_BODY.key?(@status_code) || @force_no_body
         end_of_message
       else
         length = @header[CONTENT_LENGTH]

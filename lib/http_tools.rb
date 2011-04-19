@@ -92,12 +92,11 @@ module HTTPTools
   
   METHODS = %W{GET POST HEAD PUT DELETE OPTIONS TRACE CONNECT}.freeze
   
-  NO_BODY = Hash.new {|hash, key| hash[key] = false}
-  NO_BODY.merge!(204 => true, 304 => true, nil => false)
+  NO_BODY = {204 => true, 304 => true} # presence of key tested, not value
   100.upto(199) {|status_code| NO_BODY[status_code] = true}
+  NO_BODY.freeze
   
-  ARRAY_VALUE_HEADERS = Hash.new {|hash, key| hash[key] = false}
-  ARRAY_VALUE_HEADERS.merge!("Set-Cookie" => true)
+  ARRAY_VALUE_HEADERS = {"Set-Cookie" => true} # presence of key tested, not val
   
   CRLF = "\r\n".freeze
   SPACE = " ".freeze
