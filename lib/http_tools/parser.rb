@@ -62,7 +62,7 @@ module HTTPTools
     
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
-      :fragment, :version, :status_code, :message, :header, :trailer
+      :version, :status_code, :message, :header, :trailer
     
     # Force parser to expect and parse a trailer when Trailer header missing.
     attr_accessor :force_trailer
@@ -117,7 +117,6 @@ module HTTPTools
         env[PATH_INFO] = @path_info
         env[QUERY_STRING] = @query_string
       end
-      env[FRAGMENT] = @fragment if @fragment
       @header.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
       env
@@ -187,7 +186,6 @@ module HTTPTools
       @path_info = nil
       @query_string = nil
       @request_uri = nil
-      @fragment = nil
       @version = nil
       @status_code = nil
       @header = {}
@@ -249,10 +247,8 @@ module HTTPTools
     end
     
     def uri
-      @request_uri= @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]*(?=( |\r\n))/i)
+      @request_uri = @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]*(?=( |\r\n))/i)
       if @request_uri
-        @fragment = @request_uri.slice!(/#[a-z0-9;\/?:@&=+$,%_.!~*')(-]+\Z/i)
-        @fragment.slice!(0) if @fragment
         if @request_uri =~ /^\//i
           @path_info = @request_uri.dup
           @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)

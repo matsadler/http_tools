@@ -66,7 +66,7 @@ class RequestTest < Test::Unit::TestCase
       path, query = parser.path_info, parser.query_string
     end
     
-    parser << "GET /foo%20bar/baz.html?key=value#qux HTTP/1.1\r\n\r\n"
+    parser << "GET /foo%20bar/baz.html?key=value HTTP/1.1\r\n\r\n"
     
     assert_equal("/foo%20bar/baz.html", path)
     assert_equal("key=value", query)
@@ -127,34 +127,18 @@ class RequestTest < Test::Unit::TestCase
   
   def test_fragment_with_path
     parser = HTTPTools::Parser.new
-    path = nil
-    fragment = nil
     
-    parser.add_listener(:header) do
-      path = parser.path_info
-      fragment = parser.fragment
+    assert_raise(HTTPTools::ParseError) do
+      parser << "GET /foo#bar HTTP/1.1\r\n\r\n"
     end
-    
-    parser << "GET /foo#bar HTTP/1.1\r\n\r\n"
-    
-    assert_equal("/foo", path)
-    assert_equal("bar", fragment)
   end
   
   def test_fragment_with_uri
     parser = HTTPTools::Parser.new
-    uri = nil
-    fragment = nil
     
-    parser.add_listener(:header) do
-      uri = parser.request_uri
-      fragment = parser.fragment
+    assert_raise(HTTPTools::ParseError) do
+      parser << "GET http://example.com/foo#bar HTTP/1.1\r\n\r\n"
     end
-    
-    parser << "GET http://example.com/foo#bar HTTP/1.1\r\n\r\n"
-    
-    assert_equal("http://example.com/foo", uri)
-    assert_equal("bar", fragment)
   end
   
   def test_with_header
