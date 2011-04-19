@@ -21,7 +21,8 @@ Benchmark.bm(41) do |x|
   
   x.report("HTTPTools::Parser (reset, with callbacks)") do
     parser = HTTPTools::Parser.new
-    parser.on(:headers) {}
+    parser.on(:header) {}
+    parser.on(:finish) {}
     10_000.times do
        parser << request
        parser.reset
