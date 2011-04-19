@@ -98,9 +98,6 @@ module HTTPTools
   
   ARRAY_VALUE_HEADERS = {"Set-Cookie" => true} # presence of key tested, not val
   
-  CRLF = "\r\n".freeze
-  SPACE = " ".freeze
-  
   require_base = File.dirname(__FILE__) + '/http_tools/'
   autoload :Encoding, require_base + 'encoding'
   autoload :Parser, require_base + 'parser'

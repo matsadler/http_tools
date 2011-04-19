@@ -11,6 +11,7 @@ module HTTPTools
     HEX_BIG_ENDIAN_REPEATING = "H*".freeze
     PERCENT = "%".freeze
     PLUS = "+".freeze
+    SPACE = " ".freeze
     AMPERSAND = "&".freeze
     EQUALS = "=".freeze
     CHUNK_FORMAT = "%x\r\n%s\r\n".freeze
