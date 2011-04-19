@@ -254,7 +254,7 @@ module HTTPTools
           @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
           @query_string ? @query_string.slice!(0) : @query_string = ""
         end
-        space_before_http
+        http
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
         :uri
       else
@@ -262,18 +262,12 @@ module HTTPTools
       end
     end
     
-    def space_before_http
-      if @buffer.skip(/ /i)
-        http
+    def http
+      if @buffer.skip(/ HTTP\//i)
+        request_http_version
       elsif @buffer.skip(/\r\n/i)
         key_or_newline
-      end
-    end
-    
-    def http
-      if @buffer.skip(/HTTP\//i)
-        request_http_version
-      elsif @buffer.eos? || @buffer.check(/H(T(T(P\/?)?)?)?\Z/i)
+      elsif @buffer.eos? || @buffer.check(/ (H(T(T(P\/?)?)?)?)?\Z/i)
         :http
       else
         raise ParseError.new("Protocol not recognised")
