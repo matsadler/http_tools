@@ -122,11 +122,11 @@ module HTTPTools
     #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
     # => ["foobar", ""]
     # 
-    # If nothing can be decoded the first element in the array will be an empty
-    # string and the second the remainder
+    # If nothing can be decoded the first element in the array will be nil and
+    # the second the remainder
     #   encoded_string = "3\r\nfo"
     #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
-    # => ["", "3\r\nfo"]
+    # => [nil, "3\r\nfo"]
     # 
     # Example use:
     #   include Encoding
