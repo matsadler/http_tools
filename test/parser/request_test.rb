@@ -297,7 +297,7 @@ class RequestTest < Test::Unit::TestCase
     
     parser << "GET / HTTP/1.1\r\n\r\n"
     
-    assert_equal("1.1", version)
+    assert_equal("HTTP/1.1", version)
   end
   
   def test_protocol_without_version
@@ -314,7 +314,7 @@ class RequestTest < Test::Unit::TestCase
     
     parser << "GET / HTTP/1.x\r\n\r\n"
     
-    assert_equal("1.x", version)
+    assert_equal("HTTP/1.X", version)
   end
   
   def test_finish_without_body_trigger
@@ -416,7 +416,7 @@ class RequestTest < Test::Unit::TestCase
     
     parser << "GET / http/1.1\r\n\r\n"
     
-    assert_equal("1.1", version)
+    assert_equal("HTTP/1.1", version)
   end
   
   def test_invalid_version

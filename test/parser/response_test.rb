@@ -12,7 +12,7 @@ class ResponseTest < Test::Unit::TestCase
     
     parser << "HTTP/1.1 200 OK\r\n\r\n"
     
-    assert_equal("1.1", version)
+    assert_equal("HTTP/1.1", version)
   end
   
   def test_one_dot_x_version
@@ -23,7 +23,7 @@ class ResponseTest < Test::Unit::TestCase
     
     parser << "HTTP/1.x 200 OK\r\n\r\n"
     
-    assert_equal("1.x", version)
+    assert_equal("HTTP/1.X", version)
   end
   
   def test_ok
@@ -83,7 +83,7 @@ class ResponseTest < Test::Unit::TestCase
     
     parser << "HTTP/1.0 200 (OK)\r\n\r\n"
     
-    assert_equal("1.0", version)
+    assert_equal("HTTP/1.0", version)
     assert_equal(200, code)
     assert_equal("(OK)", message)
     assert(!parser.finished?, "parser should not be finished")

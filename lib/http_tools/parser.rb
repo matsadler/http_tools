@@ -242,7 +242,7 @@ module HTTPTools
         @request_method.chop!
         @request_method.upcase!
         uri
-      elsif @buffer.skip(/HTTP\//i)
+      elsif @buffer.check(/HTTP\//i)
         response_http_version
       elsif @buffer.check(/[a-z]*\Z/i)
         :start
@@ -256,11 +256,11 @@ module HTTPTools
     def uri
       @request_uri = @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]*(?=( |\r\n))/i)
       if @request_uri
-        http
         @path_info = @request_uri.dup
         @path_info.slice!(/^([a-z0-9+.-]*:\/\/)?[^\/]+/i)
         @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
         @query_string ? @query_string.slice!(0) : @query_string = ""
+        request_http_version
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
         :uri
       else
@@ -268,24 +268,16 @@ module HTTPTools
       end
     end
     
-    def http
-      if @buffer.skip(/ HTTP\//i)
-        request_http_version
+    def request_http_version
+      @version = @buffer.scan(/ HTTP\/[0-9]+\.[0-9x]+\r\n/i)
+      if @version
+        @version.strip!
+        @version.upcase!
+        key_or_newline
       elsif @buffer.skip(/\r\n/i)
         key_or_newline
-      elsif @buffer.eos? || @buffer.check(/ (H(T(T(P\/?)?)?)?)?\Z/i)
-        :http
-      else
-        raise ParseError.new("Protocol not recognised")
-      end
-    end
-    
-    def request_http_version
-      @version = @buffer.scan(/[0-9]+\.[0-9x]+\r\n/i)
-      if @version
-        @version.chop!
-        key_or_newline
-      elsif @buffer.eos? || @buffer.check(/\d+(\.(\d+\r?)?)?\Z/i)
+      elsif @buffer.eos? ||
+        @buffer.check(/ (H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?)?\Z/i)
         :request_http_version
       else
         raise ParseError.new("Invalid version specifier")
@@ -293,11 +285,13 @@ module HTTPTools
     end
     
     def response_http_version
-      @version = @buffer.scan(/[0-9]+\.[0-9x]+ /i)
+      @version = @buffer.scan(/HTTP\/[0-9]+\.[0-9x]+ /i)
       if @version
-        version.chop!
+        @version.chop!
+        @version.upcase!
         status
-      elsif @buffer.eos? || @buffer.check(/\d+(\.(\d+)?)?\Z/i)
+      elsif @buffer.eos? ||
+        @buffer.check(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?\Z/i)
         :response_http_version
       else
         raise ParseError.new("Invalid version specifier")
