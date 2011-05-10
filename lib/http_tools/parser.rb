@@ -44,6 +44,9 @@ module HTTPTools
     QUERY_STRING = "QUERY_STRING".freeze
     REQUEST_URI = "REQUEST_URI".freeze
     FRAGMENT = "FRAGMENT".freeze
+    SERVER_NAME = "SERVER_NAME".freeze
+    SERVER_PORT = "SERVER_PORT".freeze
+    HTTP_HOST = "HTTP_HOST".freeze
     
     PROTOTYPE_ENV = {
       "SCRIPT_NAME" => "".freeze,
@@ -105,8 +108,8 @@ module HTTPTools
     # Returns a Rack compatible environment hash. Will return nil if called
     # before headers are complete.
     # 
-    # The following are not supplied, and must be added to make the environment
-    # hash fully Rack compliant: SERVER_NAME, SERVER_PORT, rack.input
+    # "rack.input" is not supplied and must be added to make the environment
+    # hash fully Rack compliant.
     # 
     def env
       return unless @header_complete
@@ -118,6 +121,9 @@ module HTTPTools
         env[QUERY_STRING] = @query_string
       end
       @header.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
+      host, port = env[HTTP_HOST].split(COLON)
+      env[SERVER_NAME] = host
+      env[SERVER_PORT] = port || "80"
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
       env
     end

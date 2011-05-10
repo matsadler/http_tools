@@ -481,8 +481,8 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("", env["SCRIPT_NAME"])
     assert_equal("/test", env["PATH_INFO"])
     assert_equal("q=foo", env["QUERY_STRING"])
-    assert_equal(nil, env["SERVER_NAME"])
-    assert_equal(nil, env["SERVER_PORT"])
+    assert_equal("www.example.com", env["SERVER_NAME"])
+    assert_equal("80", env["SERVER_PORT"])
     assert_equal("www.example.com", env["HTTP_HOST"])
     assert_equal("text/html", env["HTTP_ACCEPT"])
     
@@ -514,8 +514,8 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("", env["SCRIPT_NAME"])
     assert_equal("/submit", env["PATH_INFO"])
     assert_equal("", env["QUERY_STRING"])
-    assert_equal(nil, env["SERVER_NAME"])
-    assert_equal(nil, env["SERVER_PORT"])
+    assert_equal("www.example.com", env["SERVER_NAME"])
+    assert_equal("80", env["SERVER_PORT"])
     assert_equal("www.example.com", env["HTTP_HOST"])
     assert_equal("chunked", env["HTTP_TRANSFER_ENCODING"])
     assert_equal("X-Checksum", env["HTTP_TRAILER"])
@@ -528,6 +528,20 @@ class RequestTest < Test::Unit::TestCase
     assert_equal(false, env["rack.multithread"])
     assert_equal(false, env["rack.multiprocess"])
     assert_equal(false, env["rack.run_once"])
+  end
+  
+  def test_env_server_port
+    parser = HTTPTools::Parser.new
+    env = nil
+    parser.on(:header) {env = parser.env}
+    
+    parser << "GET / HTTP/1.1\r\n"
+    parser << "Host: localhost:9292\r\n"
+    parser << "\r\n"
+    
+    assert_equal("localhost", env["SERVER_NAME"])
+    assert_equal("9292", env["SERVER_PORT"])
+    assert_equal("localhost:9292", env["HTTP_HOST"])
   end
   
 end

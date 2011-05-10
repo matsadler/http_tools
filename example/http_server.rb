@@ -15,8 +15,7 @@ module HTTP
       host = options[:host] || options[:Host] || "0.0.0.0"
       port = (options[:port] || options[:Port] || 9292).to_s
       @app = app
-      @instance_env = {"SERVER_NAME" => host, "SERVER_PORT" => port,
-        "rack.multithread" => true}
+      @instance_env = {"rack.multithread" => true}
       @server = TCPServer.new(host, port)
       @server.listen(1024)
     end
