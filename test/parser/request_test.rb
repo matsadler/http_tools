@@ -82,28 +82,19 @@ class RequestTest < Test::Unit::TestCase
   
   def test_uri
     parser = HTTPTools::Parser.new
-    result = nil
+    uri, path, query = nil
     
     parser.add_listener(:header) do
-      result = parser.request_uri
+      uri = parser.request_uri
+      path = parser.path_info
+      query = parser.query_string
     end
     
-    parser << "GET http://example.com/foo HTTP/1.1\r\n\r\n"
+    parser << "GET http://example.com/foo?bar=baz HTTP/1.1\r\n\r\n"
     
-    assert_equal("http://example.com/foo", result)
-  end
-  
-  def test_path_callback_not_called_with_uri
-    parser = HTTPTools::Parser.new
-    result = nil
-    
-    parser.add_listener(:header) do
-      result = parser.path_info
-    end
-    
-    parser << "GET http://example.com/foo HTTP/1.1\r\n\r\n"
-    
-    assert_nil(result)
+    assert_equal("http://example.com/foo?bar=baz", uri)
+    assert_equal("/foo", path)
+    assert_equal("bar=baz", query)
   end
   
   def test_uri_callback_called_with_path

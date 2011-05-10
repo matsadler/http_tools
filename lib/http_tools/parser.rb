@@ -42,16 +42,12 @@ module HTTPTools
     REQUEST_METHOD = "REQUEST_METHOD".freeze
     PATH_INFO = "PATH_INFO".freeze
     QUERY_STRING = "QUERY_STRING".freeze
-    REQUEST_URI = "REQUEST_URI".freeze
-    FRAGMENT = "FRAGMENT".freeze
     SERVER_NAME = "SERVER_NAME".freeze
     SERVER_PORT = "SERVER_PORT".freeze
     HTTP_HOST = "HTTP_HOST".freeze
     
     PROTOTYPE_ENV = {
       "SCRIPT_NAME" => "".freeze,
-      PATH_INFO => "/".freeze,
-      QUERY_STRING => "".freeze,
       "rack.version" => [1, 1].freeze,
       "rack.url_scheme" => "http".freeze,
       "rack.errors" => STDERR,
@@ -113,13 +109,10 @@ module HTTPTools
     # 
     def env
       return unless @header_complete
-      env = PROTOTYPE_ENV.merge(
-        REQUEST_METHOD => @request_method,
-        REQUEST_URI => @request_uri)
-      if @path_info
-        env[PATH_INFO] = @path_info
-        env[QUERY_STRING] = @query_string
-      end
+      env = PROTOTYPE_ENV.dup
+      env[REQUEST_METHOD] = @request_method
+      env[PATH_INFO] = @path_info
+      env[QUERY_STRING] = @query_string
       @header.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
       host, port = env[HTTP_HOST].split(COLON)
       env[SERVER_NAME] = host
@@ -263,12 +256,11 @@ module HTTPTools
     def uri
       @request_uri = @buffer.scan(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]*(?=( |\r\n))/i)
       if @request_uri
-        if @request_uri =~ /^\//i
-          @path_info = @request_uri.dup
-          @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
-          @query_string ? @query_string.slice!(0) : @query_string = ""
-        end
         http
+        @path_info = @request_uri.dup
+        @path_info.slice!(/^([a-z0-9+.-]*:\/\/)?[^\/]+/i)
+        @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
+        @query_string ? @query_string.slice!(0) : @query_string = ""
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
         :uri
       else
