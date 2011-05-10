@@ -54,7 +54,8 @@ module HTTP
         socket << HTTPTools::Builder.response(status, header)
         body.each {|chunk| socket << chunk}
         body.close if body.respond_to?(:close)
-        parser.reset << parser.rest.lstrip and throw :reset if keep_alive
+        remainder = parser.rest.lstrip
+        parser.reset << remainder and throw :reset if keep_alive
       end
       
       begin
