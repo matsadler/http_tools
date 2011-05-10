@@ -58,6 +58,7 @@ module HTTPTools
     HTTP_ = "HTTP_".freeze
     LOWERCASE = "a-z-".freeze
     UPPERCASE = "A-Z_".freeze
+    NO_HTTP_ = {"CONTENT_LENGTH" => true, "CONTENT_TYPE" => true}
     
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
@@ -113,7 +114,11 @@ module HTTPTools
       env[REQUEST_METHOD] = @request_method
       env[PATH_INFO] = @path_info
       env[QUERY_STRING] = @query_string
-      @header.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
+      @header.each do |key, value|
+        upper_key = key.tr(LOWERCASE, UPPERCASE)
+        upper_key = HTTP_ + upper_key unless NO_HTTP_.key?(upper_key)
+        env[upper_key] = value
+      end
       host, port = env[HTTP_HOST].split(COLON)
       env[SERVER_NAME] = host
       env[SERVER_PORT] = port || "80"

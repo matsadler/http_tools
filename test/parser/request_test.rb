@@ -535,4 +535,25 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("localhost:9292", env["HTTP_HOST"])
   end
   
+  def test_env_post
+    parser = HTTPTools::Parser.new
+    env = nil
+    parser.on(:header) {env = parser.env}
+    
+    parser << "POST / HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Content-Length: 7\r\n"
+    parser << "Content-Type: application/x-www-form-urlencoded\r\n"
+    parser << "\r\n"
+    parser << "foo=bar"
+    
+    assert_equal("POST", env["REQUEST_METHOD"])
+    assert(!env.key?("HTTP_CONTENT_LENGTH"), "env must not contain HTTP_CONTENT_LENGTH")
+    assert(!env.key?("HTTP_CONTENT_TYPE"), "env must not contain HTTP_CONTENT_TYPE")
+    assert_equal("7", env["CONTENT_LENGTH"])
+    assert_equal("application/x-www-form-urlencoded", env["CONTENT_TYPE"])
+    
+    assert_equal(nil, env["rack.input"])
+  end
+  
 end
