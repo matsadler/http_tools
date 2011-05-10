@@ -207,9 +207,9 @@ module HTTPTools
       self
     end
     
-    # :call-seq: parser.add_listener(event) {|arg1 [, arg2]| block} -> parser
+    # :call-seq: parser.add_listener(event) {|arg| block} -> parser
     # parser.add_listener(event, proc) -> parser
-    # parser.on(event) {|arg1 [, arg2]| block} -> parser
+    # parser.on(event) {|arg| block} -> parser
     # parser.on(event, proc) -> parser
     # 
     # Available events are :header, :stream, :trailer, :finish, and :error.
