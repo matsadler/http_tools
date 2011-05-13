@@ -96,8 +96,6 @@ module HTTPTools
   100.upto(199) {|status_code| NO_BODY[status_code] = true}
   NO_BODY.freeze
   
-  ARRAY_VALUE_HEADERS = {"Set-Cookie" => true} # presence of key tested, not val
-  
   require_base = File.dirname(__FILE__) + '/http_tools/'
   autoload :Encoding, require_base + 'encoding'
   autoload :Parser, require_base + 'parser'

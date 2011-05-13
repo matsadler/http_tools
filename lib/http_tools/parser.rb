@@ -359,8 +359,8 @@ module HTTPTools
       value = @buffer.scan(/[^\x00\n\x7f]*\n/i)
       if value
         value.chop!
-        if ARRAY_VALUE_HEADERS.key?(@last_key)
-          @header.fetch(@last_key) {@header[@last_key] = []}.push(value)
+        if @header.key?(@last_key)
+          @header[@last_key] << "\n#{value}"
         else
           @header[@last_key] = value
         end
@@ -454,7 +454,11 @@ module HTTPTools
       value = @buffer.scan(/[^\000\n\177]+\n/i)
       if value
         value.chop!
-        @trailer[@last_key] = value
+        if @trailer.key?(@last_key)
+          @trailer[@last_key] << "\n#{value}"
+        else
+          @trailer[@last_key] = value
+        end
         trailer_key_or_newline
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :trailer_value

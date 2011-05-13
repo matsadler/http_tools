@@ -231,7 +231,7 @@ class ResponseTest < Test::Unit::TestCase
     parser << "Set-Cookie: foo=bar\r\n"
     parser << "Set-Cookie: baz=qux\r\n\r\n"
     
-    assert_equal({"Set-Cookie" => ["foo=bar", "baz=qux"]}, headers)
+    assert_equal({"Set-Cookie" => "foo=bar\nbaz=qux"}, headers)
   end
   
   def test_skip_junk_headers_at_end
@@ -819,6 +819,22 @@ class ResponseTest < Test::Unit::TestCase
     
     assert_equal({"X-Checksum" => "2a2e12c8edad17de62354ea4531ac82c"}, trailer)
     assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_multiple_trailer_values
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test: 1\r\n"
+    parser << "X-Test: 2\r\n\r\n"
+    
+    assert_equal({"X-Test" => "1\n2"}, trailer)
   end
   
   def test_messed_up_iis_header_style_trailer_1
