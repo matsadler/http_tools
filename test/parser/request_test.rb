@@ -556,4 +556,10 @@ class RequestTest < Test::Unit::TestCase
     assert_equal(nil, env["rack.input"])
   end
   
+  def test_inspect
+    parser = HTTPTools::Parser.new
+    
+    assert(/#<HTTPTools::Parser:[a-fx0-9]+ line 1, char 1 start>/ === parser.inspect, "Inspect should return useful information")
+  end
+  
 end

@@ -240,6 +240,12 @@ module HTTPTools
     end
     alias on add_listener
     
+    def inspect
+      str = to_s
+      str[-1, 0] = " #{posstr} #{state}"
+      str
+    end
+    
     private
     def start
       @request_method = @buffer.scan(/[a-z]+ /i)
