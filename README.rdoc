@@ -25,7 +25,7 @@ possible.
     puts parser.status_code + " " + parser.request_method
     puts parser.header.inspect
   end
-  parser.on(:stream) {|chunk| print chunk}
+  parser.on(:finish) {print parser.body}
   
   parser << "HTTP/1.1 200 OK\r\n"
   parser << "Content-Length: 20\r\n\r\n"

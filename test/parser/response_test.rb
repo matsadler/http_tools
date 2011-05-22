@@ -704,6 +704,37 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_default_stream_listener
+    parser = HTTPTools::Parser.new
+    body = nil
+    
+    parser.add_listener(:finish) do
+      body = parser.body
+    end
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Length: 20\r\n\r\n"
+    parser << "<h1>Hello"
+    parser << " world</h1>"
+    
+    assert_equal("<h1>Hello world</h1>", body)
+  end
+  
+  def test_overide_default_stream_listener
+    parser = HTTPTools::Parser.new
+    body = ""
+    
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Length: 20\r\n\r\n"
+    parser << "<h1>Hello"
+    parser << " world</h1>"
+    
+    assert_equal("<h1>Hello world</h1>", body)
+    assert_nil(parser.body)
+  end
+  
   def test_finished
     parser = HTTPTools::Parser.new
     code, message, remainder = nil

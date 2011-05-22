@@ -1,4 +1,5 @@
 require 'strscan'
+require 'stringio'
 
 module HTTPTools
   
@@ -15,7 +16,7 @@ module HTTPTools
   #     puts parser.status_code + " " + parser.request_method
   #     puts parser.header.inspect
   #   end
-  #   parser.on(:stream) {|chunk| print chunk}
+  #   parser.on(:finish) {print parser.body}
   #   
   #   parser << "HTTP/1.1 200 OK\r\n"
   #   parser << "Content-Length: 20\r\n\r\n"
@@ -45,6 +46,7 @@ module HTTPTools
     SERVER_NAME = "SERVER_NAME".freeze
     SERVER_PORT = "SERVER_PORT".freeze
     HTTP_HOST = "HTTP_HOST".freeze
+    RACK_INPUT = "rack.input".freeze
     
     PROTOTYPE_ENV = {
       "SCRIPT_NAME" => "".freeze,
@@ -62,7 +64,7 @@ module HTTPTools
     
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
-      :version, :status_code, :message, :header, :trailer
+      :version, :status_code, :message, :header, :body, :trailer
     
     # Force parser to expect and parse a trailer when Trailer header missing.
     attr_accessor :force_trailer
@@ -82,6 +84,7 @@ module HTTPTools
       @buffer = StringScanner.new("")
       @header = {}
       @trailer = {}
+      @stream_callback = method(:stream_callback)
     end
     
     # :call-seq: parser.concat(data) -> parser
@@ -105,8 +108,9 @@ module HTTPTools
     # Returns a Rack compatible environment hash. Will return nil if called
     # before headers are complete.
     # 
-    # "rack.input" is not supplied and must be added to make the environment
-    # hash fully Rack compliant.
+    # "rack.input" is only supplied if #env is called after parsing the request
+    # has finsished, and no listener is set for the `stream` event, otherwise
+    # you must add it yourself to make the environment hash fully Rack compliant
     # 
     def env
       return unless @header_complete
@@ -123,6 +127,9 @@ module HTTPTools
       env[SERVER_NAME] = host
       env[SERVER_PORT] = port || "80"
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
+      if @body || @stream_callback == method(:stream_callback)
+        env[RACK_INPUT] = StringIO.new(@body || "")
+      end
       env
     end
     
@@ -221,7 +228,9 @@ module HTTPTools
     # [header]     Called when headers are complete
     # 
     # [stream]     Supplied with one argument, the last chunk of body data fed
-    #              in to the parser as a String, e.g. "<h1>Hello"
+    #              in to the parser as a String, e.g. "<h1>Hello". If no
+    #              listener is set for this event the body can be retrieved with
+    #              #body
     # 
     # [trailer]    Called on the completion of the trailer, if present
     # 
@@ -315,7 +324,7 @@ module HTTPTools
       @message = ""
       @header_complete = true
       @header_callback.call if @header_callback
-      body
+      start_body
     end
     
     def status
@@ -340,7 +349,7 @@ module HTTPTools
       elsif @buffer.skip(/\r?\n/i)
         @header_complete = true
         @header_callback.call if @header_callback
-        body
+        start_body
       elsif @buffer.eos? || @buffer.check(/([ -9;-~]+:?|\r)\Z/i)
         :key_or_newline
       elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
@@ -378,7 +387,7 @@ module HTTPTools
       end
     end
     
-    def body
+    def start_body
       if @request_method &&
         !(@header.key?(CONTENT_LENGTH) || @header.key?(TRANSFER_ENCODING)) ||
         NO_BODY.key?(@status_code) || @force_no_body
@@ -486,6 +495,10 @@ module HTTPTools
       :error
     end
     alias error raise
+    
+    def stream_callback(chunk)
+      @body = (@body || "") << chunk
+    end
     
     def line_char(string, position)
       line_count = 1

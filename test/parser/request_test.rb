@@ -461,7 +461,7 @@ class RequestTest < Test::Unit::TestCase
   def test_env
     parser = HTTPTools::Parser.new
     env = nil
-    parser.on(:header) {env = parser.env}
+    parser.on(:finish) {env = parser.env}
     
     parser << "GET /test?q=foo HTTP/1.1\r\n"
     parser << "Host: www.example.com\r\n"
@@ -479,7 +479,8 @@ class RequestTest < Test::Unit::TestCase
     
     assert_equal([1,1], env["rack.version"])
     assert_equal("http", env["rack.url_scheme"])
-    assert_equal(nil, env["rack.input"])
+    assert_instance_of(StringIO, env["rack.input"])
+    assert_equal("", env["rack.input"].read)
     assert_equal(STDERR, env["rack.errors"])
     assert_equal(false, env["rack.multithread"])
     assert_equal(false, env["rack.multiprocess"])
@@ -514,7 +515,8 @@ class RequestTest < Test::Unit::TestCase
     
     assert_equal([1,1], env["rack.version"])
     assert_equal("http", env["rack.url_scheme"])
-    assert_equal(nil, env["rack.input"])
+    assert_instance_of(StringIO, env["rack.input"])
+    assert_equal("Hello world", env["rack.input"].read)
     assert_equal(STDERR, env["rack.errors"])
     assert_equal(false, env["rack.multithread"])
     assert_equal(false, env["rack.multiprocess"])
@@ -524,7 +526,7 @@ class RequestTest < Test::Unit::TestCase
   def test_env_server_port
     parser = HTTPTools::Parser.new
     env = nil
-    parser.on(:header) {env = parser.env}
+    parser.on(:finish) {env = parser.env}
     
     parser << "GET / HTTP/1.1\r\n"
     parser << "Host: localhost:9292\r\n"
@@ -538,7 +540,7 @@ class RequestTest < Test::Unit::TestCase
   def test_env_post
     parser = HTTPTools::Parser.new
     env = nil
-    parser.on(:header) {env = parser.env}
+    parser.on(:finish) {env = parser.env}
     
     parser << "POST / HTTP/1.1\r\n"
     parser << "Host: www.example.com\r\n"
@@ -553,6 +555,24 @@ class RequestTest < Test::Unit::TestCase
     assert_equal("7", env["CONTENT_LENGTH"])
     assert_equal("application/x-www-form-urlencoded", env["CONTENT_TYPE"])
     
+    assert_instance_of(StringIO, env["rack.input"])
+    assert_equal("foo=bar", env["rack.input"].read)
+  end
+  
+  def test_env_with_stream_listener
+    parser = HTTPTools::Parser.new
+    env = nil
+    body = ""
+    parser.on(:finish) {env = parser.env}
+    parser.on(:stream) {|chunk| body << chunk}
+    
+    parser << "POST / HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Content-Length: 7\r\n"
+    parser << "\r\n"
+    parser << "foo=bar"
+    
+    assert_equal("foo=bar", body)
     assert_equal(nil, env["rack.input"])
   end
   
