@@ -1,11 +1,9 @@
 require 'socket'
-require 'stringio'
 require 'rubygems'
 require 'http_tools'
 
 module HTTP
   class Server
-    RACK_INPUT = "rack.input".freeze
     CONNECTION = "Connection".freeze
     KEEP_ALIVE = "Keep-Alive".freeze
     CLOSE = "close".freeze
@@ -39,16 +37,9 @@ module HTTP
     private
     def on_connection(socket)
       parser = HTTPTools::Parser.new
-      env, input = nil
       
-      parser.on(:header) do
-        input = StringIO.new
-        env = parser.env.merge!(RACK_INPUT => input).merge!(@instance_env)
-      end
-      parser.on(:stream) {|chunk| input << chunk}
       parser.on(:finish) do
-        input.rewind
-        status, header, body = @app.call(env)
+        status, header, body = @app.call(parser.env.merge!(@instance_env))
         keep_alive = keep_alive?(parser.version, parser.header[CONNECTION])
         header[CONNECTION] = keep_alive ? KEEP_ALIVE : CLOSE
         socket << HTTPTools::Builder.response(status, header)
