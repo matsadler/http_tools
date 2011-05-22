@@ -254,7 +254,7 @@ module HTTPTools
       elsif @allow_html_without_header && @buffer.check(/\s*</i)
         skip_header
       else
-        raise ParseError.new("Protocol or method not recognised")
+        raise ParseError.new("Protocol or method not recognised at " + posstr)
       end
     end
     
@@ -269,7 +269,7 @@ module HTTPTools
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
         :uri
       else
-        raise ParseError.new("URI or path not recognised")
+        raise ParseError.new("URI or path not recognised at " + posstr)
       end
     end
     
@@ -285,7 +285,7 @@ module HTTPTools
         @buffer.check(/ (H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?)?\Z/i)
         :request_http_version
       else
-        raise ParseError.new("Invalid version specifier")
+        raise ParseError.new("Invalid version specifier at " + posstr)
       end
     end
     
@@ -299,7 +299,7 @@ module HTTPTools
         @buffer.check(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?\Z/i)
         :response_http_version
       else
-        raise ParseError.new("Invalid version specifier")
+        raise ParseError.new("Invalid version specifier at " + posstr)
       end
     end
     
@@ -322,7 +322,7 @@ module HTTPTools
         @buffer.check(/\d(\d(\d( ([^\x00-\x1f\x7f]+\r?)?)?)?)?\Z/i)
         :status
       else
-        raise ParseError.new("Invalid status line")
+        raise ParseError.new("Invalid status line at " + posstr)
       end
     end
     
@@ -351,7 +351,7 @@ module HTTPTools
       elsif @buffer.check(/[^\x00\n\x7f]+\Z/)
         :skip_bad_header
       else
-        raise ParseError.new("Illegal character in field name")
+        raise ParseError.new("Illegal character in field name at " + posstr)
       end
     end
     
@@ -368,7 +368,7 @@ module HTTPTools
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :value
       else
-        raise ParseError.new("Illegal character in field body")
+        raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
     
@@ -446,7 +446,7 @@ module HTTPTools
         @last_key.chomp!(COLON)
         trailer_value
       else
-        raise ParseError.new("Illegal character in field name")
+        raise ParseError.new("Illegal character in field name at " + posstr)
       end
     end
     
@@ -463,7 +463,7 @@ module HTTPTools
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :trailer_value
       else
-        raise ParseError.new("Illegal character in field body")
+        raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
     
@@ -480,6 +480,22 @@ module HTTPTools
       :error
     end
     alias error raise
+    
+    def line_char(string, position)
+      line_count = 1
+      char_count = 0
+      string.each_line do |line|
+        break if line.length + char_count > position
+        line_count += 1
+        char_count += line.length
+      end
+      [line_count, position + 1 - char_count]
+    end
+    
+    def posstr
+      line, char = line_char(@buffer.string, @buffer.pos)
+      "line #{line}, char #{char}"
+    end
     
   end
 end
