@@ -29,4 +29,17 @@ class ResponseTest < Test::Unit::TestCase
     assert_equal(expected, result)
   end
   
+  def test_newline_separated_multi_value_headers
+    result = HTTPTools::Builder.response(:ok, "Set-Cookie" => "foo=bar\nbaz=qux")
+    
+    expected = "HTTP/1.1 200 OK\r\nSet-Cookie: foo=bar\r\nSet-Cookie: baz=qux\r\n\r\n"
+    assert_equal(expected, result)
+  end
+  
+  def test_array_multi_value_headers
+    result = HTTPTools::Builder.response(:ok, "Set-Cookie" => ["foo=bar", "baz=qux"])
+    
+    expected = "HTTP/1.1 200 OK\r\nSet-Cookie: foo=bar\r\nSet-Cookie: baz=qux\r\n\r\n"
+    assert_equal(expected, result)
+  end
 end

@@ -4,8 +4,6 @@ module HTTPTools
   # responses. It can be used as a mixin or class methods on HTTPTools::Builder.
   # 
   module Builder
-    KEY_VALUE = "%s: %s\r\n".freeze
-    
     module_function
     
     # :call-seq: Builder.response(status, headers={}) -> string
@@ -37,8 +35,17 @@ module HTTPTools
         format_headers(headers)}\r\n"
     end
     
-    def format_headers(headers)
-      headers.inject("") {|buffer, kv| buffer << KEY_VALUE % kv}
+    def format_headers(headers, buffer="")
+      headers.each do |key, value|
+        if value.respond_to?(:each_line)
+          value.each_line {|val| buffer << "#{key}: #{val.chomp}\r\n"}
+        elsif value.respond_to?(:each)
+          value.each {|val| buffer << "#{key}: #{val}\r\n"}
+        else
+          buffer << "#{key}: #{value}\r\n"
+        end
+      end
+      buffer
     end
     private :format_headers
     class << self
