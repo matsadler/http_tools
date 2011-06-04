@@ -392,6 +392,22 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_case_insensitive_content_length
+    parser = HTTPTools::Parser.new
+    headers, body = nil, ""
+    
+    parser.add_listener(:header) {headers = parser.header}
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "content-length: 20\r\n\r\n"
+    parser << "<h1>Hello world</h1>"
+    
+    assert_equal({"content-length" => "20"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_zero_length_body
     parser = HTTPTools::Parser.new
     code, message, headers, body = nil
@@ -588,6 +604,24 @@ class ResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_case_insensitive_chunked
+    parser = HTTPTools::Parser.new
+    headers, body = nil, ""
+    
+    parser.add_listener(:header) do
+      headers = parser.header
+    end
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "transfer-encoding: CHUNKED\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    
+    assert_equal({"transfer-encoding" => "CHUNKED"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_chunked_stream
     parser = HTTPTools::Parser.new
     code, message, headers = nil
@@ -667,6 +701,26 @@ class ResponseTest < Test::Unit::TestCase
       "Transfer-Encoding" => "chunked",
       "Connection" => "close"}, headers)
     assert_equal(["<h1>Hello", " world</h1>"], body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_case_insensitive_chunked_terminated_by_close
+    parser = HTTPTools::Parser.new
+    headers, body = nil, ""
+    
+    parser.add_listener(:header) {headers = parser.header}
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "connection: CLOSE\r\n"
+    parser << "Transfer-Encoding: chunked\r\n\r\n"
+    parser << "9\r\n<h1>Hello\r\nb\r\n world</h1>\r\n"
+    parser.finish # notify parser the connection has closed
+    
+    assert_equal({
+      "Transfer-Encoding" => "chunked",
+      "connection" => "CLOSE"}, headers)
+    assert_equal("<h1>Hello world</h1>", body)
     assert(parser.finished?, "parser should be finished")
   end
   
@@ -815,6 +869,23 @@ class ResponseTest < Test::Unit::TestCase
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
     parser << "X-Checksum: 2a2e12c8edad17de62354ea4531ac82c\r\n\r\n"
     
+    assert_equal({"X-Checksum" => "2a2e12c8edad17de62354ea4531ac82c"}, trailer)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
+  def test_case_insensitive_trailer
+    parser = HTTPTools::Parser.new
+    headers, trailer = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\ntrailer: x-checksum\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Checksum: 2a2e12c8edad17de62354ea4531ac82c\r\n\r\n"
+    
+    assert_equal({"Transfer-Encoding" => "chunked", "trailer" => "x-checksum"}, headers)
     assert_equal({"X-Checksum" => "2a2e12c8edad17de62354ea4531ac82c"}, trailer)
     assert(parser.finished?, "parser should be finished")
   end
