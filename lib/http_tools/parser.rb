@@ -159,8 +159,8 @@ module HTTPTools
     def finish
       if @state == :body_on_close
         @state = end_of_message
-      elsif @state == :body_chunked && @header[CONNECTION] == CLOSE &&
-        !@header[TRAILER] && @buffer.eos?
+      elsif @state == :body_chunked && @buffer.eos? && !@trailer_expected &&
+        @header.any? {|k,v| CONNECTION.casecmp(k) == 0 && CLOSE.casecmp(v) == 0}
         @state = end_of_message
       elsif @state == :start && @buffer.string.length < 1
         raise EmptyMessageError.new("Message empty")
@@ -211,6 +211,8 @@ module HTTPTools
       @trailer = {}
       @last_key = nil
       @content_left = nil
+      @chunked = nil
+      @trailer_expected = nil
       self
     end
     
@@ -379,6 +381,11 @@ module HTTPTools
         else
           @header[@last_key] = value
         end
+        if CONTENT_LENGTH.casecmp(@last_key) == 0
+          @content_left = value.to_i
+        elsif TRANSFER_ENCODING.casecmp(@last_key) == 0
+          @chunked = CHUNKED.casecmp(value) == 0
+        end
         key_or_newline
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :value
@@ -388,20 +395,16 @@ module HTTPTools
     end
     
     def start_body
-      if @request_method &&
-        !(@header.key?(CONTENT_LENGTH) || @header.key?(TRANSFER_ENCODING)) ||
+      if @request_method && !(@content_left || @chunked) ||
         NO_BODY.key?(@status_code) || @force_no_body
         end_of_message
+      elsif @content_left
+        body_with_length
+      elsif @chunked
+        @trailer_expected = @header.any? {|k,v| TRAILER.casecmp(k) == 0}
+        body_chunked
       else
-        length = @header[CONTENT_LENGTH]
-        if length
-          @content_left = length.to_i
-          body_with_length
-        elsif @header[TRANSFER_ENCODING] == CHUNKED
-          body_chunked
-        else
-          body_on_close
-        end
+        body_on_close
       end
     end
     
@@ -432,12 +435,10 @@ module HTTPTools
       end
       if remainder
         :body_chunked
+      elsif @trailer_expected || @force_trailer
+        trailer_key_or_newline
       else
-        if @header[TRAILER] || @force_trailer
-          trailer_key_or_newline
-        else
-          end_of_message
-        end
+        end_of_message
       end
     end
     
