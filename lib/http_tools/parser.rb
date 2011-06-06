@@ -81,7 +81,7 @@ module HTTPTools
     # 
     def initialize
       @state = :start
-      @buffer = StringScanner.new("")
+      @buffer = @scanner = StringScanner.new("")
       @header = {}
       @trailer = {}
       @stream_callback = method(:stream_callback)
@@ -399,6 +399,7 @@ module HTTPTools
         NO_BODY.key?(@status_code) || @force_no_body
         end_of_message
       elsif @content_left
+        @buffer = @buffer.rest
         body_with_length
       elsif @chunked
         @trailer_expected = @header.any? {|k,v| TRAILER.casecmp(k) == 0}
@@ -409,19 +410,26 @@ module HTTPTools
     end
     
     def body_with_length
-      if !@buffer.eos?
-        chunk = @buffer.string.slice(@buffer.pos, @content_left)
+      if !@buffer.empty?
+        chunk_length = @buffer.length
+        if chunk_length < @content_left
+          chunk = @buffer
+          @buffer = ""
+        else
+          chunk = @buffer.slice!(0, @content_left)
+          chunk_length = @content_left
+        end
         @stream_callback.call(chunk) if @stream_callback
-        chunk_length = chunk.length
-        @buffer.pos += chunk_length
         @content_left -= chunk_length
         if @content_left < 1
+          @buffer = @scanner << @buffer
           end_of_message
         else
           :body_with_length
         end
       elsif @content_left < 1 # zero length body
         @stream_callback.call("") if @stream_callback
+        @buffer = @scanner
         end_of_message
       else
         :body_with_length
