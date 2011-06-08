@@ -158,6 +158,7 @@ module HTTPTools
     # 
     def finish
       if @state == :body_on_close
+        @buffer = @scanner
         @state = end_of_message
       elsif @state == :body_chunked && @buffer.eos? && !@trailer_expected &&
         @header.any? {|k,v| CONNECTION.casecmp(k) == 0 && CLOSE.casecmp(v) == 0}
@@ -399,30 +400,28 @@ module HTTPTools
         NO_BODY.key?(@status_code) || @force_no_body
         end_of_message
       elsif @content_left
-        @buffer = @buffer.rest
+        @buffer = [@buffer.rest]
         body_with_length
       elsif @chunked
         @trailer_expected = @header.any? {|k,v| TRAILER.casecmp(k) == 0}
         body_chunked
       else
+        @buffer = [@buffer.rest]
         body_on_close
       end
     end
     
     def body_with_length
-      if !@buffer.empty?
-        chunk_length = @buffer.length
-        if chunk_length < @content_left
-          chunk = @buffer
-          @buffer = ""
-        else
-          chunk = @buffer.slice!(0, @content_left)
-          chunk_length = @content_left
+      chunk = @buffer.shift
+      if !chunk.empty?
+        chunk_length = chunk.length
+        if chunk_length > @content_left
+          @scanner << chunk.slice!(@content_left..-1)
         end
         @stream_callback.call(chunk) if @stream_callback
         @content_left -= chunk_length
         if @content_left < 1
-          @buffer = @scanner << @buffer
+          @buffer = @scanner
           end_of_message
         else
           :body_with_length
@@ -451,8 +450,7 @@ module HTTPTools
     end
     
     def body_on_close
-      chunk = @buffer.rest
-      @buffer.terminate
+      chunk = @buffer.shift
       @stream_callback.call(chunk) if @stream_callback
       :body_on_close
     end
