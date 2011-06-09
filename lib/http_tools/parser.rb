@@ -28,8 +28,6 @@ module HTTPTools
   #   <h1>Hello world</h1>
   # 
   class Parser
-    include Encoding
-    
     COLON = ":".freeze
     KEY_TERMINATOR = ": ".freeze
     CONTENT_LENGTH = "Content-Length".freeze
@@ -436,16 +434,33 @@ module HTTPTools
     end
     
     def body_chunked
-      decoded, remainder = transfer_encoding_chunked_decode(nil, @buffer)
-      if decoded
-        @stream_callback.call(decoded) if @stream_callback
-      end
-      if remainder
-        :body_chunked
-      elsif @trailer_expected || @force_trailer
-        trailer_key_or_newline
-      else
-        end_of_message
+      while true
+        start_pos = @buffer.pos
+        hex_chunk_length = @buffer.scan(/[0-9a-f]+ *\r?\n/i)
+        break :body_chunked unless hex_chunk_length
+        
+        chunk_length = hex_chunk_length.to_i(16)
+        if chunk_length == 0
+          if @trailer_expected || @force_trailer
+            break trailer_key_or_newline
+          else
+            break end_of_message
+          end
+        end
+        
+        begin
+          chunk = @buffer.rest.slice(0, chunk_length)
+          @buffer.pos += chunk_length
+          if chunk && @buffer.skip(/\r?\n/i)
+            @stream_callback.call(chunk) if @stream_callback
+          else
+            @buffer.pos = start_pos
+            break :body_chunked
+          end
+        rescue RangeError
+          @buffer.pos = start_pos
+          break :body_chunked
+        end
       end
     end
     

@@ -664,13 +664,13 @@ class ResponseTest < Test::Unit::TestCase
     parser << "Transfer-Encoding: chunked\r\n"
     parser << "\r\n"
     parser << "9\r\n<h1>Hello\r\nb\r\n world</h1>\r\n"
-    parser << "12\r\n<p>Lorem ipsum</p>\r\n"
-    parser << "0\r\n"
+    parser << "12\r\n<p>Lorem ipsum</p>"
+    parser << "\r\n0\r\n"
     
     assert_equal(200, code)
     assert_equal("OK", message)
     assert_equal({"Transfer-Encoding" => "chunked"}, headers)
-    assert_equal(["<h1>Hello world</h1>", "<p>Lorem ipsum</p>"], body)
+    assert_equal(["<h1>Hello", " world</h1>", "<p>Lorem ipsum</p>"], body)
     assert(parser.finished?, "parser should be finished")
   end
   
