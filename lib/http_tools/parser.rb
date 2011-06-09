@@ -84,7 +84,7 @@ module HTTPTools
       @buffer = @scanner = StringScanner.new("")
       @header = {}
       @trailer = {}
-      @stream_callback = method(:stream_callback)
+      @stream_callback = method(:setup_stream_callback)
     end
     
     # :call-seq: parser.concat(data) -> parser
@@ -127,7 +127,7 @@ module HTTPTools
       env[SERVER_NAME] = host
       env[SERVER_PORT] = port || "80"
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
-      if @body || @stream_callback == method(:stream_callback)
+      if @body || @stream_callback == method(:setup_stream_callback)
         env[RACK_INPUT] = StringIO.new(@body || "")
       end
       env
@@ -503,8 +503,14 @@ module HTTPTools
     end
     alias error raise
     
+    def setup_stream_callback(chunk)
+      @body = ""
+      stream_callback(chunk)
+      @stream_callback = method(:stream_callback)
+    end
+    
     def stream_callback(chunk)
-      @body = (@body || "") << chunk
+      @body << chunk
     end
     
     def line_char(string, position)
