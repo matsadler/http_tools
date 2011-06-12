@@ -7,6 +7,7 @@ module HTTPTools
   # used as a mixin or class methods on HTTPTools::Encoding.
   # 
   module Encoding
+    # :stopdoc:
     HEX_BIG_ENDIAN_2_BYTES = "H2".freeze
     HEX_BIG_ENDIAN_REPEATING = "H*".freeze
     PERCENT = "%".freeze
@@ -15,6 +16,7 @@ module HTTPTools
     AMPERSAND = "&".freeze
     EQUALS = "=".freeze
     CHUNK_FORMAT = "%x\r\n%s\r\n".freeze
+    # :startdoc:
     
     module_function
     
@@ -44,7 +46,7 @@ module HTTPTools
     # 
     # Takes a Hash and converts it to a String as if it was a HTML form being
     # submitted, eg
-    # {"query" => "fish", "lang" => "en"} becomes "lang=en&query=fish"
+    # {"query" => "fish", "lang" => "en"} becomes "query=fish&lang=en"
     # 
     # To get multiple key value pairs with the same key use an array as the
     # value, eg
@@ -64,7 +66,7 @@ module HTTPTools
     # 
     # Takes a String resulting from a HTML form being submitted, and converts it
     # to a hash,
-    # eg "lang=en&query=fish" becomes {"query" => "fish", "lang" => "en"}
+    # eg "lang=en&query=fish" becomes {"lang" => "en", "query" => "fish"}
     # 
     # Multiple key value pairs with the same key will become a single key with
     # an array value, eg "lang=en&lang=fr" becomes {"lang" => ["en", "fr"]}

@@ -84,11 +84,13 @@ module HTTPTools
     505 => "HTTP Version Not Supported"}.freeze
   STATUS_DESCRIPTIONS.values.each {|val| val.freeze}
   
+  # :stopdoc: hide from rdoc as it makes a mess
   STATUS_LINES = Hash.new do |hash, key|
     code = if key.kind_of?(Integer) then key else STATUS_CODES[key] end
     description = STATUS_DESCRIPTIONS[code]
     hash[key] = "#{code} #{description}"
   end
+  # :startdoc:
   
   METHODS = %W{GET POST HEAD PUT DELETE OPTIONS TRACE CONNECT}.freeze
   
@@ -96,13 +98,15 @@ module HTTPTools
   100.upto(199) {|status_code| NO_BODY[status_code] = true}
   NO_BODY.freeze
   
+  Error = Class.new(StandardError)
+  ParseError = Class.new(Error)
+  EndOfMessageError = Class.new(ParseError)
+  MessageIncompleteError = Class.new(EndOfMessageError)
+  EmptyMessageError = Class.new(MessageIncompleteError)
+  
   require_base = File.dirname(__FILE__) + '/http_tools/'
   autoload :Encoding, require_base + 'encoding'
   autoload :Parser, require_base + 'parser'
   autoload :Builder, require_base + 'builder'
-  autoload :ParseError, require_base + 'errors'
-  autoload :EndOfMessageError, require_base + 'errors'
-  autoload :MessageIncompleteError, require_base + 'errors'
-  autoload :EmptyMessageError, require_base + 'errors'
   
 end

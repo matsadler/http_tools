@@ -28,6 +28,7 @@ module HTTPTools
   #   <h1>Hello world</h1>
   # 
   class Parser
+    # :stopdoc:
     COLON = ":".freeze
     KEY_TERMINATOR = ": ".freeze
     CONTENT_LENGTH = "Content-Length".freeze
@@ -36,7 +37,6 @@ module HTTPTools
     CONNECTION = "Connection".freeze
     CLOSE = "close".freeze
     CHUNKED = "chunked".freeze
-    EVENTS = %W{header stream trailer finish error}.map {|e| e.freeze}.freeze
     
     REQUEST_METHOD = "REQUEST_METHOD".freeze
     PATH_INFO = "PATH_INFO".freeze
@@ -59,6 +59,8 @@ module HTTPTools
     LOWERCASE = "a-z-".freeze
     UPPERCASE = "A-Z_".freeze
     NO_HTTP_ = {"CONTENT_LENGTH" => true, "CONTENT_TYPE" => true}
+    # :startdoc:
+    EVENTS = %W{header stream trailer finish error}.map {|e| e.freeze}.freeze
     
     attr_reader :state # :nodoc:
     attr_reader :request_method, :path_info, :query_string, :request_uri,
@@ -222,8 +224,7 @@ module HTTPTools
     # 
     # Available events are :header, :stream, :trailer, :finish, and :error.
     # 
-    # Adding a second callback for an event will overwite the existing callback
-    # or delegate.
+    # Adding a second callback for an event will overwite the existing callback.
     # 
     # Events:
     # [header]     Called when headers are complete
@@ -250,7 +251,7 @@ module HTTPTools
     end
     alias on add_listener
     
-    def inspect
+    def inspect # :nodoc:
       str = to_s
       str[-1, 0] = " #{posstr} #{state}"
       str

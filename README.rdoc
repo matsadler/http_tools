@@ -45,11 +45,11 @@ mixin or class methods on HTTPTools::Encoding.
 === Example
 
   HTTPTools::Encoding.www_form_encode({"query" => "fish", "lang" => "en"})
-  #=> "lang=en&query=fish"
+  #=> "query=fish&lang=en"
   
   include HTTPTools::Encoding
   www_form_decode("lang=en&query=fish")
-  #=> {"query" => "fish", "lang" => "en"}
+  #=> {"lang" => "en", "query" => "fish"}
 
 == HTTPTools::Builder
 
