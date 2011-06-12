@@ -3,7 +3,7 @@ require base + '/http_tools'
 require 'test/unit'
 require 'uri'
 
-class RequestTest < Test::Unit::TestCase
+class BuilderRequestTest < Test::Unit::TestCase
   
   def test_get
     result = HTTPTools::Builder.request(:get, "www.example.com", "/test")

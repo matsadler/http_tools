@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby1.9
+#!/opt/local/bin/ruby1.9 -w
 
 require 'coverage' # >= ruby 1.9 only
 
@@ -16,8 +16,8 @@ at_exit do
     next unless value.include?(0)
     puts key
     puts
-    File.readlines(key).zip(value).each_with_index do |(line, value), i|
-      print "%3i %3s  %s" % [(i + 1), value, line]
+    File.readlines(key).zip(value).each_with_index do |(line, val), i|
+      print "%3i %3s  %s" % [(i + 1), val, line]
     end
     puts
     puts

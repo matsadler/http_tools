@@ -2,7 +2,7 @@ base = File.expand_path(File.dirname(__FILE__) + '/../../lib')
 require base + '/http_tools'
 require 'test/unit'
 
-class ResponseTest < Test::Unit::TestCase
+class BuilderResponseTest < Test::Unit::TestCase
   
   def test_status_ok
     result = HTTPTools::Builder.response(:ok)

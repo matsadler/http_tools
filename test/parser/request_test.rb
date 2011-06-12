@@ -2,7 +2,7 @@ base = File.expand_path(File.dirname(__FILE__) + '/../../lib')
 require base + '/http_tools'
 require 'test/unit'
 
-class RequestTest < Test::Unit::TestCase
+class ParserRequestTest < Test::Unit::TestCase
   
   def test_get
     parser = HTTPTools::Parser.new

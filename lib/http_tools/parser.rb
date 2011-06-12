@@ -84,7 +84,18 @@ module HTTPTools
       @buffer = @scanner = StringScanner.new("")
       @header = {}
       @trailer = {}
+      @force_no_body = nil
+      @allow_html_without_header = nil
+      @force_trailer = nil
+      @status_code = nil
+      @content_left = nil
+      @chunked = nil
+      @body = nil
+      @header_callback = nil
       @stream_callback = method(:setup_stream_callback)
+      @trailer_callback = nil
+      @finish_callback = nil
+      @error_callback = nil
     end
     
     # :call-seq: parser.concat(data) -> parser
