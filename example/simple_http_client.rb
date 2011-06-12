@@ -45,11 +45,10 @@ module HTTP
       parser.force_no_body = !response_has_body
       response = nil
       
-      parser.on(:header) do
-        code, message, head = parser.status_code, parser.message, parser.header
-        response = Response.new(code, message, head, "")
+      parser.on(:finish) do
+        code, message = parser.status_code, parser.message
+        response = Response.new(code, message, parser.header, parser.body)
       end
-      parser.on(:stream) {|chunk| response.body << chunk}
       
       socket = TCPSocket.new(@host, @port)
       socket << HTTPTools::Builder.request(method, @host, path, headers)
