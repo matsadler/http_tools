@@ -12,8 +12,8 @@ module HTTPTools
   # 
   # Example:
   #   parser = HTTPTools::Parser.new
-  #   parser.on(:header) do |header|
-  #     puts parser.status_code + " " + parser.request_method
+  #   parser.on(:header) do
+  #     puts parser.status_code + " " + parser.message
   #     puts parser.header.inspect
   #   end
   #   parser.on(:finish) {print parser.body}
