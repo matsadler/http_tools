@@ -12,6 +12,10 @@ Written purely in Ruby, with no dependencies outside of the standard library, it
 should run across all Ruby implementations compatible with 1.8 or later, and
 install in environments without a compiler available.
 
+All tests are currently run (and pass) against ruby 1.8.6, 1.8.7, 1.9.2, jruby 1.6.2, rubinius 1.2.4, MacRuby 0.10
+
+Performance tuning is mainly aimed at ruby 1.9, with ruby 1.8 and jruby taken in to consideration. jruby is generally fastest.
+
 == HTTPTools::Parser
 
 HTTPTools::Parser is a HTTP request & response parser with an evented API.

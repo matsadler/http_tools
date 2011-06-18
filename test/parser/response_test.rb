@@ -1,3 +1,4 @@
+# encoding: utf-8
 base = File.expand_path(File.dirname(__FILE__) + '/../../lib')
 require base + '/http_tools'
 require 'test/unit'
