@@ -50,16 +50,15 @@ class WebSocket
     socket << HTTPTools::Builder.request(:get, hostport, path, header) << key3
     
     parser = HTTPTools::Parser.new
-    header_done, code = nil
+    code = nil
     
     parser.on(:header) do
       raise "status is not 101" unless parser.status_code == 101
       unless parser.header["Sec-WebSocket-Origin"] == origin
         raise "origin missmatch"
       end
-      header_done = true
     end
-    parser << socket.sysread(1024 * 16) until header_done
+    parser << socket.sysread(1024 * 16) until parser.finished?
     reply = parser.rest
     reply << socket.read(16 - reply.length) if reply.length < 16
     unless reply == Digest::MD5.digest([number1, number2].pack("N*") + key3)

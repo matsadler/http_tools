@@ -45,7 +45,7 @@ module WebSocket
     private
     def handshake(socket)
       parser = HTTPTools::Parser.new
-      header_done, key1, key2 = nil
+      key1, key2 = nil
       response_header = {"Connection" => "Upgrade", "Upgrade" => "WebSocket"}
       
       parser.on(:header) do
@@ -54,9 +54,8 @@ module WebSocket
         location = "ws://" + parser.header["Host"] + parser.path_info
         response_header["Sec-WebSocket-Location"] = location
         response_header["Sec-WebSocket-Origin"] = parser.header["Origin"]
-        header_done = true
       end
-      parser << socket.sysread(1024 * 16) until header_done
+      parser << socket.sysread(1024 * 16) until parser.finished?
       key3 = parser.rest
       key3 << socket.read(8 - key3.length) if key3.length < 8
       

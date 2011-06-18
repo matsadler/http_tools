@@ -458,6 +458,72 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_instance_of(HTTPTools::ParseError, error)
   end
   
+  def test_upgrade_websocket_hixie_76
+    parser = HTTPTools::Parser.new
+    method, path, headers = nil
+    
+    parser.add_listener(:header) do
+      method = parser.request_method
+      path = parser.path_info
+      headers = parser.header
+    end
+    
+    parser << "GET /demo HTTP/1.1\r\n"
+    parser << "Host: example.com\r\n"
+    parser << "Connection: Upgrade\r\n"
+    parser << "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00\r\n"
+    parser << "Sec-WebSocket-Protocol: sample\r\n"
+    parser << "Upgrade: WebSocket\r\n"
+    parser << "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5\r\n"
+    parser << "Origin: http://example.com\r\n\r\n^n:ds[4U"
+    
+    assert_equal("GET", method)
+    assert_equal("/demo", path)
+    assert_equal({
+      "Host" => "example.com",
+      "Connection" => "Upgrade",
+      "Sec-WebSocket-Key2" => "12998 5 Y3 1  .P00",
+      "Upgrade" => "WebSocket",
+      "Sec-WebSocket-Protocol" => "sample",
+      "Sec-WebSocket-Key1" => "4 @1  46546xW%0l 1 5",
+      "Origin" => "http://example.com"}, headers)
+    assert(parser.finished?, "Parser should be finished.")
+    assert_equal(parser.rest, "^n:ds[4U")
+  end
+  
+  def test_upgrade_websocket_hybi_09
+    parser = HTTPTools::Parser.new
+    method, path, headers = nil
+    
+    parser.add_listener(:header) do
+      method = parser.request_method
+      path = parser.path_info
+      headers = parser.header
+    end
+    
+    parser << "GET /chat HTTP/1.1\r\n"
+    parser << "Host: server.example.com\r\n"
+    parser << "Upgrade: websocket\r\n"
+    parser << "Connection: Upgrade\r\n"
+    parser << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+    parser << "Sec-WebSocket-Origin: http://example.com\r\n"
+    parser << "Sec-WebSocket-Protocol: chat, superchat\r\n"
+    parser << "Sec-WebSocket-Version: 8\r\n\r\n"
+    
+    assert_equal("GET", method)
+    assert_equal("/chat", path)
+    assert_equal({
+      "Host" => "server.example.com",
+      "Upgrade" => "websocket",
+      "Connection" => "Upgrade",
+      "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Origin" => "http://example.com",
+      "Sec-WebSocket-Protocol" => "chat, superchat",
+      "Sec-WebSocket-Version" => "8"}, headers)
+    assert(parser.finished?, "Parser should be finished.")
+    assert_equal(parser.rest, "")
+  end
+  
   def test_env
     parser = HTTPTools::Parser.new
     env = nil

@@ -724,6 +724,62 @@ class ParserResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_upgrade_websocket_hixie_76
+    parser = HTTPTools::Parser.new
+    code, message, headers = nil
+    
+    parser.add_listener(:header) do
+      code = parser.status_code
+      message = parser.message
+      headers = parser.header
+    end
+    
+    parser << "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
+    parser << "Upgrade: WebSocket\r\n"
+    parser << "Connection: Upgrade\r\n"
+    parser << "Sec-WebSocket-Origin: http://example.com\r\n"
+    parser << "Sec-WebSocket-Location: ws://example.com/demo\r\n"
+    parser << "Sec-WebSocket-Protocol: sample\r\n\r\n8jKS'y:G*Co,Wxa-"
+    
+    assert_equal(101, code)
+    assert_equal("WebSocket Protocol Handshake", message)
+    assert_equal({
+      "Upgrade" => "WebSocket",
+      "Connection" => "Upgrade",
+      "Sec-WebSocket-Origin" => "http://example.com",
+      "Sec-WebSocket-Location" => "ws://example.com/demo",
+      "Sec-WebSocket-Protocol" => "sample"}, headers)
+    assert(parser.finished?, "Parser should be finished.")
+    assert_equal(parser.rest, "8jKS'y:G*Co,Wxa-")
+  end
+  
+  def test_upgrade_websocket_hybi_09
+    parser = HTTPTools::Parser.new
+    code, message, headers = nil
+    
+    parser.add_listener(:header) do
+      code = parser.status_code
+      message = parser.message
+      headers = parser.header
+    end
+    
+    parser << "HTTP/1.1 101 Switching Protocols\r\n"
+    parser << "Upgrade: websocket\r\n"
+    parser << "Connection: Upgrade\r\n"
+    parser << "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n"
+    parser << "Sec-WebSocket-Protocol: chat\r\n\r\n"
+    
+    assert_equal(101, code)
+    assert_equal("Switching Protocols", message)
+    assert_equal({
+      "Upgrade" => "websocket",
+      "Connection" => "Upgrade",
+      "Sec-WebSocket-Accept" => "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=",
+      "Sec-WebSocket-Protocol" => "chat"}, headers)
+    assert(parser.finished?, "Parser should be finished.")
+    assert_equal(parser.rest, "")
+  end
+  
   def test_html_body_only_not_allowed
     parser = HTTPTools::Parser.new
     
