@@ -88,6 +88,7 @@ module HTTPTools
       @allow_html_without_header = nil
       @force_trailer = nil
       @status_code = nil
+      @header_done = nil
       @content_left = nil
       @chunked = nil
       @body = nil
@@ -196,6 +197,15 @@ module HTTPTools
       @state == :end_of_message
     end
     
+    # :call-seq: parser.header? -> bool
+    # 
+    # Returns true when the parser has received the complete header, false
+    # otherwise.
+    # 
+    def header?
+      @header_done
+    end
+    
     # :call-seq: parser.rest -> string
     # 
     # Returns unconsumed data in the parser's buffer.
@@ -219,6 +229,7 @@ module HTTPTools
       @request_uri = nil
       @version = nil
       @status_code = nil
+      @header_done = nil
       @header = {}
       @trailer = {}
       @last_key = nil
@@ -410,6 +421,7 @@ module HTTPTools
     end
     
     def start_body
+      @header_done = true
       if @request_method && !(@content_left || @chunked) ||
         NO_BODY.key?(@status_code) || @force_no_body
         end_of_message

@@ -846,6 +846,20 @@ class ParserResponseTest < Test::Unit::TestCase
     assert_nil(parser.body)
   end
   
+  def test_header_query
+    parser = HTTPTools::Parser.new
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    assert(!parser.header?, "Header not yet done.")
+    
+    parser << "Content-Length: 20\r\n"
+    assert(!parser.header?, "Header not yet done.")
+    
+    parser << "\r\n"
+    
+    assert(parser.header?, "Header should be done.")
+  end
+  
   def test_finished
     parser = HTTPTools::Parser.new
     code, message, remainder = nil
