@@ -379,6 +379,26 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal(2, calls)
   end
   
+  def test_default_body_with_reset
+    parser = HTTPTools::Parser.new
+    
+    parser << "POST /example HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Content-Length: 3\r\n\r\n"
+    parser << "foo"
+    
+    assert_equal("foo", parser.body)
+    
+    parser.reset
+    
+    parser << "POST /example HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n"
+    parser << "Content-Length: 3\r\n\r\n"
+    parser << "bar"
+    
+    assert_equal("bar", parser.body)
+  end
+  
   def test_not_a_http_request
     parser = HTTPTools::Parser.new
     

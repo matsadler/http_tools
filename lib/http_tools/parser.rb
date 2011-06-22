@@ -225,6 +225,10 @@ module HTTPTools
       @content_left = nil
       @chunked = nil
       @trailer_expected = nil
+      @body = nil
+      if @stream_callback == method(:stream_callback)
+        @stream_callback = method(:setup_stream_callback)
+      end
       self
     end
     
