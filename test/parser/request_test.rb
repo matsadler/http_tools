@@ -399,6 +399,24 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal("bar", parser.body)
   end
   
+  def test_rest_with_request_in_one_chunk
+    parser = HTTPTools::Parser.new
+    
+    parser << "POST /example HTTP/1.1\r\nContent-Length: 4\r\n\r\ntest"
+    
+    assert_equal("test", parser.body)
+    assert_equal("", parser.rest)
+  end
+  
+  def test_rest_with_request_and_next_in_one_chunk
+    parser = HTTPTools::Parser.new
+    
+    parser << "POST /example HTTP/1.1\r\nContent-Length: 4\r\n\r\ntestPOST /ex"
+    
+    assert_equal("test", parser.body)
+    assert_equal("POST /ex", parser.rest)
+  end
+  
   def test_not_a_http_request
     parser = HTTPTools::Parser.new
     

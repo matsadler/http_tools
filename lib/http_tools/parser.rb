@@ -427,6 +427,11 @@ module HTTPTools
         end_of_message
       elsif @content_left
         @buffer = [@buffer.rest]
+        if @content_left >= @scanner.rest_size
+          @scanner.terminate
+        else
+          @scanner.pos += @content_left
+        end
         body_with_length
       elsif @chunked
         @trailer_expected = @header.any? {|k,v| TRAILER.casecmp(k) == 0}
@@ -442,7 +447,7 @@ module HTTPTools
       if !chunk.empty?
         chunk_length = chunk.length
         if chunk_length > @content_left
-          @scanner << chunk.slice!(@content_left..-1)
+          @scanner.terminate << chunk.slice!(@content_left..-1)
         end
         @stream_callback.call(chunk) if @stream_callback
         @content_left -= chunk_length
