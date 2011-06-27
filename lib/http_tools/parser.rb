@@ -214,6 +214,14 @@ module HTTPTools
       @buffer.rest
     end
     
+    # :call-seq: parser.rest_size -> int
+    # 
+    # Returns the size in bytes of the unconsumed data in the parser's buffer.
+    # 
+    def rest_size
+      @buffer.rest_size
+    end
+    
     # :call-seq: parser.reset -> parser
     # 
     # Reset the parser so it can be used to process a new request.

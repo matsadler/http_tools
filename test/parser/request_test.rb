@@ -417,6 +417,18 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal("POST /ex", parser.rest)
   end
   
+  def test_rest_size
+    parser = HTTPTools::Parser.new
+    
+    parser << "GET /foo"
+    
+    assert_equal("/foo".length, parser.rest_size)
+    
+    parser << " HTTP/1.1\r\nHost: www.example.com"
+    
+    assert_equal("www.example.com".length, parser.rest_size)
+  end
+  
   def test_not_a_http_request
     parser = HTTPTools::Parser.new
     
