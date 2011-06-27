@@ -75,6 +75,9 @@ module HTTPTools
     # Allow responses with no status line or headers if it looks like HTML.
     attr_accessor :allow_html_without_header
     
+    # Max size for a 'Transfer-Encoding: chunked' body chunk. nil for no limit.
+    attr_accessor :max_chunk_size
+    
     # :call-seq: Parser.new -> parser
     # 
     # Create a new HTTPTools::Parser.
@@ -87,6 +90,7 @@ module HTTPTools
       @force_no_body = nil
       @allow_html_without_header = nil
       @force_trailer = nil
+      @max_chunk_size = nil
       @status_code = nil
       @header_done = nil
       @content_left = nil
@@ -487,6 +491,8 @@ module HTTPTools
           else
             break end_of_message
           end
+        elsif @max_chunk_size && chunk_length > @max_chunk_size
+          raise ParseError.new("Maximum chunk size exceeded")
         end
         
         begin

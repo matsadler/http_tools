@@ -725,6 +725,20 @@ class ParserResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_max_chunk_size
+    parser = HTTPTools::Parser.new
+    parser.max_chunk_size = 1024
+    
+    parser << "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+    
+    assert_nothing_raised(HTTPTools::ParseError) {parser << "1\r\na\r\n"}
+    assert_nothing_raised(HTTPTools::ParseError) do
+      parser << "400\r\n#{"a" * 1024}\r\n"
+    end
+    
+    assert_raise(HTTPTools::ParseError) {parser << "401\r\n"}
+  end
+  
   def test_upgrade_websocket_hixie_76
     parser = HTTPTools::Parser.new
     code, message, headers = nil
