@@ -24,7 +24,7 @@ class ParserResponseTest < Test::Unit::TestCase
     
     parser << "HTTP/1.x 200 OK\r\n\r\n"
     
-    assert_equal("HTTP/1.X", version)
+    assert_equal("HTTP/1.x", version)
   end
   
   def test_ok

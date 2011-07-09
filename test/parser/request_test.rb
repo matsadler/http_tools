@@ -314,7 +314,7 @@ class ParserRequestTest < Test::Unit::TestCase
     
     parser << "GET / HTTP/1.x\r\n\r\n"
     
-    assert_equal("HTTP/1.X", version)
+    assert_equal("HTTP/1.x", version)
   end
   
   def test_finish_without_body_trigger
@@ -455,7 +455,7 @@ class ParserRequestTest < Test::Unit::TestCase
     
     parser << "get / HTTP/1.1\r\n\r\n"
     
-    assert_equal("GET", result)
+    assert_equal("get", result)
   end
   
   def test_lowercase_http
@@ -466,7 +466,7 @@ class ParserRequestTest < Test::Unit::TestCase
     
     parser << "GET / http/1.1\r\n\r\n"
     
-    assert_equal("HTTP/1.1", version)
+    assert_equal("http/1.1", version)
   end
   
   def test_invalid_version

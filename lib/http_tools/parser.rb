@@ -301,7 +301,6 @@ module HTTPTools
       @request_method = @buffer.scan(/[a-z]+ /i)
       if @request_method
         @request_method.chop!
-        @request_method.upcase!
         uri
       elsif @buffer.check(/HTTP\//i)
         response_http_version
@@ -333,7 +332,6 @@ module HTTPTools
       @version = @buffer.scan(/ HTTP\/[0-9]+\.[0-9x]+\r\n/i)
       if @version
         @version.strip!
-        @version.upcase!
         key_or_newline
       elsif @buffer.skip(/\r\n/i)
         key_or_newline
@@ -349,7 +347,6 @@ module HTTPTools
       @version = @buffer.scan(/HTTP\/[0-9]+\.[0-9x]+ /i)
       if @version
         @version.chop!
-        @version.upcase!
         status
       elsif @buffer.eos? ||
         @buffer.check(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?\Z/i)
