@@ -29,6 +29,7 @@ module HTTPTools
   # 
   class Parser
     # :stopdoc:
+    EMPTY = "".freeze
     COLON = ":".freeze
     KEY_TERMINATOR = ": ".freeze
     CONTENT_LENGTH = "Content-Length".freeze
@@ -319,7 +320,7 @@ module HTTPTools
         @path_info = @request_uri.dup
         @path_info.slice!(/^([a-z0-9+.-]*:\/\/)?[^\/]+/i)
         @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
-        @query_string ? @query_string.slice!(0) : @query_string = ""
+        @query_string ? @query_string[0] = EMPTY : @query_string = ""
         request_http_version
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
         :uri
@@ -417,7 +418,7 @@ module HTTPTools
         if @header.key?(@last_key)
           @header[@last_key] << "\n#{value}"
         else
-          @header[@last_key] = value
+          @header[@last_key.freeze] = value
         end
         if CONTENT_LENGTH.casecmp(@last_key) == 0
           @content_left = value.to_i
@@ -541,7 +542,7 @@ module HTTPTools
         if @trailer.key?(@last_key)
           @trailer[@last_key] << "\n#{value}"
         else
-          @trailer[@last_key] = value
+          @trailer[@last_key.freeze] = value
         end
         trailer_key_or_newline
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
