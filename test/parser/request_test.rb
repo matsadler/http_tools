@@ -717,7 +717,7 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_inspect
     parser = HTTPTools::Parser.new
     
-    assert(/#<HTTPTools::Parser:[a-fx0-9]+ line 1, char 1 start>/ === parser.inspect, "Inspect should return useful information")
+    assert_match(/#<HTTPTools::Parser:0x[a-f0-9]+ line 1, char 1 start>/, parser.inspect)
   end
   
 end
