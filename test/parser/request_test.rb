@@ -692,6 +692,28 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal(nil, env["rack.input"])
   end
   
+  def test_env_lowercase_method
+    parser = HTTPTools::Parser.new
+    
+    parser << "get /test?q=foo HTTP/1.1\r\n"
+    parser << "Host: www.example.com\r\n\r\n"
+    
+    assert_equal("GET", parser.env["REQUEST_METHOD"])
+  end
+  
+  def test_env_no_host
+    parser = HTTPTools::Parser.new
+    
+    parser << "GET /test?q=foo HTTP/1.1\r\n\r\n"
+    
+    assert_nothing_raised(NoMethodError) do
+      parser.env
+    end
+    assert_equal(nil, parser.env["HTTP_HOST"])
+    assert_equal(nil, parser.env["SERVER_NAME"])
+    assert_equal("80", parser.env["SERVER_PORT"])
+  end
+  
   def test_inspect
     parser = HTTPTools::Parser.new
     

@@ -132,15 +132,15 @@ module HTTPTools
     def env
       return unless @header_complete
       env = PROTOTYPE_ENV.dup
-      env[REQUEST_METHOD] = @request_method
+      env[REQUEST_METHOD] = @request_method.upcase
       env[PATH_INFO] = @path_info
       env[QUERY_STRING] = @query_string
       @header.each do |key, value|
         upper_key = key.tr(LOWERCASE, UPPERCASE)
-        upper_key = HTTP_ + upper_key unless NO_HTTP_.key?(upper_key)
-        env[upper_key] = value
+        upper_key[0,0] = HTTP_ unless NO_HTTP_.key?(upper_key)
+        env[upper_key.freeze] = value
       end
-      host, port = env[HTTP_HOST].split(COLON)
+      host, port = env[HTTP_HOST].split(COLON) if env.key?(HTTP_HOST)
       env[SERVER_NAME] = host
       env[SERVER_PORT] = port || "80"
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
