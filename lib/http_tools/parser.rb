@@ -93,7 +93,7 @@ module HTTPTools
       @force_trailer = nil
       @max_chunk_size = nil
       @status_code = nil
-      @header_done = nil
+      @header_complete = nil
       @content_left = nil
       @chunked = nil
       @body = nil
@@ -208,7 +208,7 @@ module HTTPTools
     # otherwise.
     # 
     def header?
-      @header_done
+      @header_complete
     end
     
     # :call-seq: parser.rest -> string
@@ -242,7 +242,7 @@ module HTTPTools
       @request_uri = nil
       @version = nil
       @status_code = nil
-      @header_done = nil
+      @header_complete = nil
       @header = {}
       @trailer = {}
       @last_key = nil
@@ -429,7 +429,6 @@ module HTTPTools
     end
     
     def start_body
-      @header_done = true
       if @request_method && !(@content_left || @chunked) ||
         NO_BODY.key?(@status_code) || @force_no_body
         end_of_message
