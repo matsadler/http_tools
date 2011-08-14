@@ -291,7 +291,7 @@ module HTTPTools
     alias on add_listener
     
     def inspect # :nodoc:
-      "#<#{self.class.name}:0x#{(object_id << 1).to_s(16)} #{posstr} #{state}>"
+      super.sub(/ .*>$/, " #{posstr} #{state}>")
     end
     
     private
