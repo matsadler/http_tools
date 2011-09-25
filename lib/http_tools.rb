@@ -1,3 +1,8 @@
+require_base = File.expand_path('../http_tools', __FILE__)
+require require_base + '/encoding'
+require require_base + '/parser'
+require require_base + '/builder'
+
 module HTTPTools
   STATUS_CODES = {
     :continue => 100,
@@ -103,10 +108,4 @@ module HTTPTools
   EndOfMessageError = Class.new(ParseError)
   MessageIncompleteError = Class.new(EndOfMessageError)
   EmptyMessageError = Class.new(MessageIncompleteError)
-  
-  require_base = File.dirname(__FILE__) + '/http_tools/'
-  autoload :Encoding, require_base + 'encoding'
-  autoload :Parser, require_base + 'parser'
-  autoload :Builder, require_base + 'builder'
-  
 end
