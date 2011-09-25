@@ -15,7 +15,6 @@ module HTTPTools
     SPACE = " ".freeze
     AMPERSAND = "&".freeze
     EQUALS = "=".freeze
-    CHUNK_FORMAT = "%x\r\n%s\r\n".freeze
     # :startdoc:
     
     module_function
@@ -25,7 +24,7 @@ module HTTPTools
     # URL encode a string, eg "le café" becomes "le+caf%c3%a9"
     # 
     def url_encode(string)
-      string.gsub(/[^a-zA-Z0-9._~-]+/) do |match|
+      string.gsub(/[^a-z0-9._~-]+/i) do |match|
         length = match.respond_to?(:bytesize) ? match.bytesize : match.length
         PERCENT + match.unpack(HEX_BIG_ENDIAN_2_BYTES * length).join(PERCENT)
       end
@@ -36,7 +35,7 @@ module HTTPTools
     # URL decode a string, eg "le+caf%c3%a9" becomes "le café"
     # 
     def url_decode(string)
-      string.tr(PLUS, SPACE).gsub(/(%[0-9a-fA-F]{2})+/) do |match|
+      string.tr(PLUS, SPACE).gsub(/(%[0-9a-f]{2})+/i) do |match|
         r = [match.delete(PERCENT)].pack(HEX_BIG_ENDIAN_REPEATING)
         r.respond_to?(:force_encoding) ? r.force_encoding(string.encoding) : r
       end
@@ -72,15 +71,17 @@ module HTTPTools
     # an array value, eg "lang=en&lang=fr" becomes {"lang" => ["en", "fr"]}
     #
     def www_form_decode(string)
-      string.split(AMPERSAND).inject({}) do |memo, key_value|
+      out = {}
+      string.split(AMPERSAND).each do |key_value|
         key, value = key_value.split(EQUALS)
         key, value = url_decode(key), url_decode(value)
-        if memo.key?(key)
-          memo.merge(key => [*memo[key]].push(value))
+        if out.key?(key)
+          out[key] = [*out[key]].push(value)
         else
-          memo.merge(key => value)
+          out[key] = value
         end
       end
+      out
     end
     
     # :call-seq:
@@ -94,8 +95,8 @@ module HTTPTools
     # passing an empty string or nil will generate the empty chunk.
     # 
     def transfer_encoding_chunked_encode(string)
-      if string && string.length > 0
-        sprintf(CHUNK_FORMAT, string.length, string)
+      if string && (length = string.length) > 0
+        "#{length.to_s(16)}\r\n#{string}\r\n"
       else
         "0\r\n"
       end

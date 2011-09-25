@@ -43,7 +43,7 @@ module HTTPTools
     def format_headers(headers, buffer="")
       headers.each do |key, value|
         if value.respond_to?(:each_line)
-          value.each_line {|val| buffer << "#{key}: #{val.chomp}\r\n"}
+          value.each_line {|val| val.chomp!; buffer << "#{key}: #{val}\r\n"}
         elsif value.respond_to?(:each)
           value.each {|val| buffer << "#{key}: #{val}\r\n"}
         else
