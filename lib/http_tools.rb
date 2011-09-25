@@ -14,6 +14,8 @@ module HTTPTools
     :no_content => 204,
     :reset_content => 205,
     :partial_content => 206,
+    :multi_status => 207,
+    :im_used => 226,
     :multiple_choices => 300,
     :moved_permanently => 301,
     :found => 302,
@@ -39,12 +41,19 @@ module HTTPTools
     :unsupported_media_type => 415,
     :requested_range_not_satisfiable => 416,
     :expectation_failed => 417,
+    :im_a_teapot => 418,
+    :unprocessable_entity => 422,
+    :locked => 423,
+    :failed_dependency => 424,
+    :upgrade_required => 426,
     :internal_server_error => 500,
     :not_implemented => 501,
     :bad_gateway => 502,
     :service_unavailable => 503,
     :gateway_timeout => 504,
-    :http_version_not_supported => 505}.freeze
+    :http_version_not_supported => 505,
+    :variant_also_negotiates => 506,
+    :insufficient_storage => 507}.freeze
   
   STATUS_DESCRIPTIONS = {
     100 => "Continue",
@@ -56,6 +65,8 @@ module HTTPTools
     204 => "No Content",
     205 => "Reset Content",
     206 => "Partial Content",
+    207 => "Multi-Status",
+    226 => "IM Used",
     300 => "Multiple Choices",
     301 => "Moved Permanently",
     302 => "Found",
@@ -81,12 +92,19 @@ module HTTPTools
     415 => "Unsupported Media Type",
     416 => "Requested Range Not Satisfiable",
     417 => "Expectation Failed",
+    418 => "I'm a teapot",
+    422 => "Unprocessable Entity",
+    423 => "Locked",
+    424 => "Failed Dependency",
+    426 => "Upgrade Required",
     500 => "Internal Server Error",
     501 => "Not Implemented",
     502 => "Bad Gateway",
     503 => "Service Unavailable",
     504 => "Gateway Timeout",
-    505 => "HTTP Version Not Supported"}.freeze
+    505 => "HTTP Version Not Supported",
+    506 => "Variant Also Negotiates",
+    507 => "Insufficient Storage"}.freeze
   STATUS_DESCRIPTIONS.values.each {|val| val.freeze}
   
   # :stopdoc: hide from rdoc as it makes a mess
