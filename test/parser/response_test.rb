@@ -882,7 +882,6 @@ class ParserResponseTest < Test::Unit::TestCase
     parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     parser.add_listener(:finish) {remainder = parser.rest}
@@ -905,7 +904,6 @@ class ParserResponseTest < Test::Unit::TestCase
     parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     parser.add_listener(:finish) {remainder = parser.rest}
@@ -928,7 +926,6 @@ class ParserResponseTest < Test::Unit::TestCase
     parser.add_listener(:header) do
       code = parser.status_code
       message = parser.message
-      headers = parser.header
     end
     parser.add_listener(:stream) {|chunk| body << chunk}
     parser.add_listener(:finish) {remainder = parser.rest}
