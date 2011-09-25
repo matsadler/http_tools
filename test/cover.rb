@@ -1,9 +1,7 @@
-#!/opt/local/bin/ruby1.9 -w
-
 require 'coverage' # >= ruby 1.9 only
 
 at_exit do
-  testing = Dir["../lib/**/*.rb"].map(&File.method(:expand_path))
+  testing = Dir[File.expand_path("../../lib/**/*.rb", __FILE__)]
   
   results = Coverage.result.select {|key, value| testing.include?(key)}
   
@@ -15,9 +13,11 @@ at_exit do
   results.each do |key, value|
     next unless value.include?(0)
     puts key
+    puts " line calls code"
     puts
     File.readlines(key).zip(value).each_with_index do |(line, val), i|
-      print "%3i %3s  %s" % [(i + 1), val, line]
+      print val == 0 ? "> " : "  "
+      print "%3i %5s %s" % [(i + 1), val, line]
     end
     puts
     puts
@@ -25,4 +25,4 @@ at_exit do
 end
 
 Coverage.start
-Dir["**/*_test.rb"].each {|test| require test}
+Dir[File.expand_path("../**/*_test.rb", __FILE__)].each {|test| require test}

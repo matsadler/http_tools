@@ -1,0 +1,6 @@
+for version in $(rbenv versions | ruby -pe "sub(/\*? +(\S+).*/, '\1')"); do
+	RBENV_VERSION=$version ruby -vw "$0/../runner.rb"
+	echo
+done
+
+macruby -vw "$0/../runner.rb"
