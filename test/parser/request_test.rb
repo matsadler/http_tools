@@ -589,7 +589,7 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal("/test", env["PATH_INFO"])
     assert_equal("q=foo", env["QUERY_STRING"])
     assert_equal("www.example.com", env["SERVER_NAME"])
-    assert_equal("80", env["SERVER_PORT"])
+    assert(!env.key?("SERVER_PORT"), "env must not contain SERVER_PORT")
     assert_equal("www.example.com", env["HTTP_HOST"])
     assert_equal("text/html", env["HTTP_ACCEPT"])
     
@@ -623,7 +623,7 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal("/submit", env["PATH_INFO"])
     assert_equal("", env["QUERY_STRING"])
     assert_equal("www.example.com", env["SERVER_NAME"])
-    assert_equal("80", env["SERVER_PORT"])
+    assert(!env.key?("SERVER_PORT"), "env must not contain SERVER_PORT")
     assert_equal("www.example.com", env["HTTP_HOST"])
     assert_equal("chunked", env["HTTP_TRANSFER_ENCODING"])
     assert_equal("X-Checksum", env["HTTP_TRAILER"])
@@ -703,15 +703,16 @@ class ParserRequestTest < Test::Unit::TestCase
   
   def test_env_no_host
     parser = HTTPTools::Parser.new
+    env = nil
     
     parser << "GET /test?q=foo HTTP/1.1\r\n\r\n"
     
     assert_nothing_raised(NoMethodError) do
-      parser.env
+      env = parser.env
     end
-    assert_equal(nil, parser.env["HTTP_HOST"])
-    assert_equal(nil, parser.env["SERVER_NAME"])
-    assert_equal("80", parser.env["SERVER_PORT"])
+    assert(!env.key?("HTTP_HOST"), "env must not contain HTTP_HOST")
+    assert(!env.key?("SERVER_NAME"), "env must not contain SERVER_NAME")
+    assert(!env.key?("SERVER_PORT"), "env must not contain SERVER_PORT")
   end
   
   def test_inspect

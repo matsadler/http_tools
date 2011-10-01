@@ -124,10 +124,15 @@ module HTTPTools
     # 
     # Returns a Rack compatible environment hash. Will return nil if called
     # before headers are complete.
+    #
+    # "SERVER_NAME" and "SERVER_PORT" are only supplied if they can be
+    # determined from the request (eg, they are present in the "Host" header).
     # 
     # "rack.input" is only supplied if #env is called after parsing the request
-    # has finsished, and no listener is set for the `stream` event, otherwise
-    # you must add it yourself to make the environment hash fully Rack compliant
+    # has finsished, and no listener is set for the `stream` event
+    # 
+    # If not supplied, you must ensure "SERVER_NAME", "SERVER_PORT", and
+    # "rack.input" are present to make the environment hash fully Rack compliant
     # 
     def env
       return unless @header_complete
@@ -141,8 +146,8 @@ module HTTPTools
         env[upper_key.freeze] = value
       end
       host, port = env[HTTP_HOST].split(COLON) if env.key?(HTTP_HOST)
-      env[SERVER_NAME] = host
-      env[SERVER_PORT] = port || "80"
+      env[SERVER_NAME] = host if host
+      env[SERVER_PORT] = port if port
       @trailer.each {|k, val| env[HTTP_ + k.tr(LOWERCASE, UPPERCASE)] = val}
       if @body || @stream_callback == method(:setup_stream_callback)
         env[RACK_INPUT] = StringIO.new(@body || "")
