@@ -31,6 +31,7 @@ module HTTPTools
     # :stopdoc:
     EMPTY = "".freeze
     COLON = ":".freeze
+    SPACE = " ".freeze
     KEY_TERMINATOR = ": ".freeze
     CONTENT_LENGTH = "Content-Length".freeze
     TRANSFER_ENCODING = "Transfer-Encoding".freeze
@@ -414,7 +415,7 @@ module HTTPTools
     def value
       value = @buffer.scan(/[^\x00\n\x7f]*\n/i)
       if value
-        value.chop!
+        value.strip!
         if @header.key?(@last_key)
           @header[@last_key] << "\n#{value}"
         else
@@ -425,11 +426,24 @@ module HTTPTools
         elsif TRANSFER_ENCODING.casecmp(@last_key) == 0
           @chunked = CHUNKED.casecmp(value) == 0
         end
-        key_or_newline
+        value_extention
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :value
       else
         raise ParseError.new("Illegal character in field body at " + posstr)
+      end
+    end
+    
+    def value_extention
+      if @buffer.check(/[^ \t]/)
+        key_or_newline
+      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/)
+        value_extra.sub!(/^[ \t]+/, SPACE)
+        value_extra.chop!
+        (@header[@last_key] << value_extra).strip!
+        value_extention
+      else
+        :value_extention
       end
     end
     
@@ -537,17 +551,30 @@ module HTTPTools
     def trailer_value
       value = @buffer.scan(/[^\000\n\177]+\n/i)
       if value
-        value.chop!
+        value.strip!
         if @trailer.key?(@last_key)
           @trailer[@last_key] << "\n#{value}"
         else
           @trailer[@last_key.freeze] = value
         end
-        trailer_key_or_newline
+        trailer_value_extention
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :trailer_value
       else
         raise ParseError.new("Illegal character in field body at " + posstr)
+      end
+    end
+    
+    def trailer_value_extention
+      if @buffer.check(/[^ \t]/)
+        trailer_key_or_newline
+      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/)
+        value_extra.sub!(/^[ \t]+/, SPACE)
+        value_extra.chop!
+        (@trailer[@last_key] << value_extra).strip!
+        trailer_value_extention
+      else
+        :trailer_value_extention
       end
     end
     

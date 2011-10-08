@@ -235,6 +235,73 @@ class ParserResponseTest < Test::Unit::TestCase
     assert_equal({"Set-Cookie" => "foo=bar\nbaz=qux"}, headers)
   end
   
+  def test_multi_line_header_value
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type: text/html;\r\n"
+    parser << " charset=utf-8\r\n\r\n"
+    
+    assert_equal({"Content-Type" => "text/html; charset=utf-8"}, headers)
+  end
+  
+  def test_multi_line_header_value_in_one_chunk
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type: text/html;\r\n charset=utf-8\r\n\r\n"
+    
+    assert_equal({"Content-Type" => "text/html; charset=utf-8"}, headers)
+  end
+  
+  def test_multi_line_header_value_sub_line_chunks
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type:"
+    parser << " text/"
+    parser << "html;\r\n "
+    parser << "charset="
+    parser << "utf-8\r\n\r\n"
+    
+    assert_equal({"Content-Type" => "text/html; charset=utf-8"}, headers)
+  end
+  
+  def test_header_value_separated_by_newline
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type:\r\n"
+    parser << "\t     text/html;\r\n"
+    parser << "\t     charset=utf-8\r\n\r\n"
+    
+    assert_equal({"Content-Type" => "text/html; charset=utf-8"}, headers)
+  end
+  
+  def test_header_value_leading_and_trailing_whitespace_is_stripped
+    parser = HTTPTools::Parser.new
+    headers = nil
+    
+    parser.add_listener(:header) {headers = parser.header}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type:\t text/html \t\r\n\r\n"
+    
+    assert_equal({"Content-Type" => "text/html"}, headers)
+  end
+  
   def test_skip_junk_headers_at_end
     parser = HTTPTools::Parser.new
     code, message, headers = nil
@@ -526,7 +593,7 @@ class ParserResponseTest < Test::Unit::TestCase
     parser << "\r\n"
     parser << "<h1>Hello world</h1>"
     
-    assert_equal({"Page-Completion-Status" => "Normal\r", "Content-Length" => "20"}, headers)
+    assert_equal({"Page-Completion-Status" => "Normal", "Content-Length" => "20"}, headers)
     assert_equal("<h1>Hello world</h1>", body)
     assert(parser.finished?, "parser should be finished")
   end
@@ -1019,6 +1086,88 @@ class ParserResponseTest < Test::Unit::TestCase
     parser << "X-Test: 2\r\n\r\n"
     
     assert_equal({"X-Test" => "1\n2"}, trailer)
+  end
+  
+  def test_multi_line_trailer_value
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test: one\r\n"
+    parser << " two\r\n\r\n"
+    
+    assert_equal({"X-Test" => "one two"}, trailer)
+  end
+  
+  def test_multi_line_trailer_value_in_one_chunk
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test: one\r\n two\r\n\r\n"
+    
+    assert_equal({"X-Test" => "one two"}, trailer)
+  end
+  
+  def test_multi_line_trailer_value_sub_line_chunks
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test:"
+    parser << " on"
+    parser << "e\r\n "
+    parser << "t"
+    parser << "wo\r\n\r\n"
+    
+    assert_equal({"X-Test" => "one two"}, trailer)
+  end
+  
+  def test_trailer_value_separated_by_newline
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test:\r\n"
+    parser << "\t     one\r\n"
+    parser << "\t     two\r\n\r\n"
+    
+    assert_equal({"X-Test" => "one two"}, trailer)
+  end
+  
+  def test_trailer_value_leading_and_trailing_whitespace_is_stripped
+    parser = HTTPTools::Parser.new
+    trailer = nil
+    
+    parser.add_listener(:trailer) {trailer = parser.trailer}
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test:\t one \t\r\n\r\n"
+    
+    assert_equal({"X-Test" => "one"}, trailer)
   end
   
   def test_messed_up_iis_header_style_trailer_1
