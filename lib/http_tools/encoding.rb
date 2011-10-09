@@ -109,27 +109,27 @@ module HTTPTools
     # the decoded response and nil.
     # Example:
     #   encoded_string = "3\r\nfoo\r\n3\r\nbar\r\n0\r\n"
-    #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
-    # => ["foobar", nil]
+    #   Encoding.transfer_encoding_chunked_decode(encoded_string)
+    #   #=> ["foobar", nil]
     # 
     # Decoding a partial response will return an array of the response decoded
     # so far, and the remainder of the encoded string.
     # Example
     #   encoded_string = "3\r\nfoo\r\n3\r\nba"
-    #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
-    # => ["foo", "3\r\nba"]
+    #   Encoding.transfer_encoding_chunked_decode(encoded_string)
+    #   #=> ["foo", "3\r\nba"]
     # 
     # If the chunks are complete, but there is no empty terminating chunk, the
     # second element in the array will be an empty string.
     #   encoded_string = "3\r\nfoo\r\n3\r\nbar"
-    #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
-    # => ["foobar", ""]
+    #   Encoding.transfer_encoding_chunked_decode(encoded_string)
+    #   #=> ["foobar", ""]
     # 
     # If nothing can be decoded the first element in the array will be nil and
     # the second the remainder
     #   encoded_string = "3\r\nfo"
-    #   Encoding.transfer_encoding_chunked_decode(encoded_string)\
-    # => [nil, "3\r\nfo"]
+    #   Encoding.transfer_encoding_chunked_decode(encoded_string)
+    #   #=> [nil, "3\r\nfo"]
     # 
     # Example use:
     #   include Encoding

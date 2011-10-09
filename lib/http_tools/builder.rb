@@ -31,9 +31,8 @@ module HTTPTools
     #   Builder.request(:get, "example.com")
     #   #=> "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n"
     #   
-    #   Builder.request(:post, "example.com", "/form", "Accept" => "text/html")
-    #\
-    #=> "POST" /form HTTP/1.1\r\nHost: example.com\r\nAccept: text/html\r\n\r\n"
+    #   Builder.request(:post, "example.com", "/s", "Accept" => "text/html")
+    #   #=> "POST /s HTTP/1.1\r\nHost: example.com\r\nAccept: text/html\r\n\r\n"
     # 
     def request(method, host, path="/", headers={})
       "#{method.to_s.upcase} #{path} HTTP/1.1\r\nHost: #{host}\r\n#{
