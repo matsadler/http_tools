@@ -108,11 +108,13 @@ module HTTPTools
   STATUS_DESCRIPTIONS.values.each {|val| val.freeze}
   
   # :stopdoc: hide from rdoc as it makes a mess
-  STATUS_LINES = Hash.new do |hash, key|
-    code = if key.kind_of?(Integer) then key else STATUS_CODES[key] end
-    description = STATUS_DESCRIPTIONS[code]
-    hash[key] = "#{code} #{description}"
+  STATUS_LINES = {}
+  STATUS_CODES.each do |name, code|
+    line = "#{code} #{STATUS_DESCRIPTIONS[code]}"
+    STATUS_LINES[name] = line
+    STATUS_LINES[code] = line
   end
+  STATUS_LINES.freeze
   # :startdoc:
   
   METHODS = %W{GET POST HEAD PUT DELETE OPTIONS TRACE CONNECT}.freeze
