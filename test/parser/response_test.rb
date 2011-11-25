@@ -646,6 +646,29 @@ class ParserResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_body_with_no_headers
+    parser = HTTPTools::Parser.new
+    code, message, headers = nil
+    body = ""
+    
+    parser.add_listener(:header) do
+      code = parser.status_code
+      message = parser.message
+      headers = parser.header
+    end
+    parser.add_listener(:stream) {|chunk| body << chunk}
+    
+    parser << "HTTP/1.1 200 OK\r\n\r\n"
+    parser << "<h1>hello world</h1>"
+    parser.finish # notify parser the connection has closed
+    
+    assert_equal(200, code)
+    assert_equal("OK", message)
+    assert_equal({}, headers)
+    assert_equal("<h1>hello world</h1>", body)
+    assert(parser.finished?, "parser should be finished")
+  end
+  
   def test_chunked
     parser = HTTPTools::Parser.new
     code, message, headers = nil
