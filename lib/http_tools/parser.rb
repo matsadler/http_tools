@@ -606,7 +606,7 @@ module HTTPTools
       line_count = 1
       char_count = 0
       string.each_line do |line|
-        break if line.length + char_count > position
+        break if line.length + char_count >= position
         line_count += 1
         char_count += line.length
       end

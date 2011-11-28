@@ -721,4 +721,12 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_match(/#<HTTPTools::Parser:0x[a-f0-9]+ line 1, char 1 start>/, parser.inspect)
   end
   
+  def test_inspect_position
+    parser = HTTPTools::Parser.new
+    
+    parser << "GET / HTTP/1.1\r\nHost: foo."
+    
+    assert_match(/#<HTTPTools::Parser:0x[a-f0-9]+ line 2, char 7 value>/, parser.inspect)
+  end
+  
 end
