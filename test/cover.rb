@@ -1,28 +1,21 @@
 require 'coverage' # >= ruby 1.9 only
 
+testing = Dir[File.expand_path("../../lib/**/*.rb", __FILE__)]
+
 at_exit do
-  testing = Dir[File.expand_path("../../lib/**/*.rb", __FILE__)]
-  
   results = Coverage.result.select {|key, value| testing.include?(key)}
   
-  puts
-  total = results.map(&:last).flatten.compact
-  puts "#{total.select {|i| i > 0}.length}/#{total.length} executable lines covered"
-  puts
+  all = results.map(&:last).flatten.compact
+  print "\n#{all.reject(&:zero?).size}/#{all.size} executable lines covered\n\n"
   
   results.each do |key, value|
     next unless value.include?(0)
-    puts key
-    puts " line calls code"
-    puts
-    File.readlines(key).zip(value).each_with_index do |(line, val), i|
-      print val == 0 ? "> " : "  "
-      print "%3i %5s %s" % [(i + 1), val, line]
+    lines = File.readlines(key).zip(value).each_with_index.map do |(line,val),i|
+      "%-2s%3i %5s %s" % [(">" if val == 0), (i + 1), val, line]
     end
-    puts
-    puts
+    print "#{key}\n line calls code\n\n#{lines.join}\n\n"
   end
 end
 
 Coverage.start
-Dir[File.expand_path("../**/*_test.rb", __FILE__)].each {|test| require test}
+require_relative 'runner'

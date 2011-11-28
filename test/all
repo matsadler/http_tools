@@ -1,5 +1,7 @@
+#!/bin/sh
+
 for version in $(rbenv versions --bare); do
 	RBENV_VERSION=$version ruby -vw "$0/../runner.rb"; echo
 done
 
-macruby -vw "$0/../runner.rb"
+[[ $(which macruby) ]] && macruby -vw "$0/../runner.rb"
