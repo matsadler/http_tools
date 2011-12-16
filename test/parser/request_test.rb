@@ -487,11 +487,11 @@ class ParserRequestTest < Test::Unit::TestCase
     parser = HTTPTools::Parser.new
     
     assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nx-invalid\000key: text/plain\r\n"
+      parser << "GET / HTTP/1.1\r\nx-invalid\u2014key: text/plain\r\n"
     end
   end
   
-  def test_invalid_header_value_with_non_ascii_character
+  def test_invalid_header_value_with_non_control_character
     parser = HTTPTools::Parser.new
     
     assert_raise(HTTPTools::ParseError) do

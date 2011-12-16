@@ -397,6 +397,8 @@ module HTTPTools
       elsif @last_key = @buffer.scan(/[ -9;-~]+:(?=[^ ])/i)
         @last_key.chomp!(COLON)
         value
+      elsif @request_method
+        raise ParseError.new("Illegal character in field name at " + posstr)
       else
         skip_bad_header
       end

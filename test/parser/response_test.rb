@@ -380,6 +380,14 @@ class ParserResponseTest < Test::Unit::TestCase
     assert(parser.finished?, "parser should be finished")
   end
   
+  def test_invalid_header_key_with_control_character
+    parser = HTTPTools::Parser.new
+    
+    assert_raise(HTTPTools::ParseError) do
+      parser << "HTTP/1.0 200 OK\r\nx-invalid\0key: valid key\r\n"
+    end
+  end
+  
   def test_apple_dot_com
     parser = HTTPTools::Parser.new
     code, message, headers = nil
