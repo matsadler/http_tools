@@ -325,7 +325,7 @@ module HTTPTools
         @query_string = @path_info.slice!(/\?[a-z0-9;\/?:@&=+$,%_.!~*')(-]*/i)
         @query_string ? @query_string[0] = EMPTY : @query_string = ""
         request_http_version
-      elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(#-]+\Z/i)
+      elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]+\Z/i)
         :uri
       else
         raise ParseError.new("URI or path not recognised at " + posstr)

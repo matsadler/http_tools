@@ -124,6 +124,14 @@ class ParserRequestTest < Test::Unit::TestCase
     end
   end
   
+  def test_fragment_with_unfinished_path
+    parser = HTTPTools::Parser.new
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "GET /foo#ba"
+    end
+  end
+  
   def test_fragment_with_uri
     parser = HTTPTools::Parser.new
     
