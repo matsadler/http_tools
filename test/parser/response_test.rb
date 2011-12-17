@@ -290,6 +290,26 @@ class ParserResponseTest < Test::Unit::TestCase
     assert_equal({"Content-Type" => "text/html; charset=utf-8"}, headers)
   end
   
+  def test_multi_line_header_invalid_value
+    parser = HTTPTools::Parser.new
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Content-Type: text/html;\r\n"
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << " charset=\0\r\n\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field body at line 3, char 10
+
+ charset=#{null}\\r\\n
+            ^
+    MESSAGE
+  end
+  
   def test_header_value_leading_and_trailing_whitespace_is_stripped
     parser = HTTPTools::Parser.new
     headers = nil
@@ -1201,6 +1221,29 @@ Protocol or method not recognised at line 1, char 1
     parser << "\t     two\r\n\r\n"
     
     assert_equal({"X-Test" => "one two"}, trailer)
+  end
+  
+  def test_multi_line_trailer_invalid_value
+    parser = HTTPTools::Parser.new
+    
+    parser << "HTTP/1.1 200 OK\r\n"
+    parser << "Transfer-Encoding: chunked\r\n"
+    parser << "Trailer: X-Test\r\n\r\n"
+    parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
+    parser << "X-Test: one\r\n"
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << " \0two\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field body at line 9, char 2
+
+ #{null}two\\r\\n
+    ^
+    MESSAGE
   end
   
   def test_trailer_value_leading_and_trailing_whitespace_is_stripped

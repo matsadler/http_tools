@@ -445,15 +445,18 @@ module HTTPTools
     end
     
     def value_extention
-      if @buffer.check(/[^ \t]/)
+      if @buffer.check(/[^ \t]/i)
         key_or_newline
-      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/)
-        value_extra.sub!(/^[ \t]+/, SPACE)
+      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/i)
+        value_extra.sub!(/^[ \t]+/i, SPACE)
         value_extra.chop!
         (@header[@last_key] << value_extra).strip!
         value_extention
-      else
+      elsif @buffer.eos? || @buffer.check(/[ \t]+[^\x00\n\x7f]*\Z/i)
         :value_extention
+      else
+        @buffer.skip(/[ \t]+[^\x00\n\x7f]*/i)
+        raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
     
@@ -578,15 +581,18 @@ module HTTPTools
     end
     
     def trailer_value_extention
-      if @buffer.check(/[^ \t]/)
+      if @buffer.check(/[^ \t]/i)
         trailer_key_or_newline
-      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/)
-        value_extra.sub!(/^[ \t]+/, SPACE)
+      elsif value_extra = @buffer.scan(/[ \t]+[^\x00\n\x7f]*\n/i)
+        value_extra.sub!(/^[ \t]+/i, SPACE)
         value_extra.chop!
         (@trailer[@last_key] << value_extra).strip!
         trailer_value_extention
-      else
+      elsif @buffer.eos? || @buffer.check(/[ \t]+[^\x00\n\x7f]*\Z/i)
         :trailer_value_extention
+      else
+        @buffer.skip(/[ \t]+[^\x00\n\x7f]*/i)
+        raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
     
