@@ -383,9 +383,18 @@ class ParserResponseTest < Test::Unit::TestCase
   def test_invalid_header_key_with_control_character
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "HTTP/1.0 200 OK\r\nx-invalid\0key: valid key\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field name at line 2, char 10
+
+x-invalid#{null}key: valid key\\r\\n
+            ^
+    MESSAGE
   end
   
   def test_apple_dot_com
@@ -896,9 +905,17 @@ class ParserResponseTest < Test::Unit::TestCase
   def test_html_body_only_not_allowed
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "<html><p>HTTP is hard</p></html>"
     end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Protocol or method not recognised at line 1, char 1
+
+<html><p>HTTP is hard</p></html>
+^
+    MESSAGE
   end
   
   def test_html_body_only_allowed
@@ -1268,9 +1285,18 @@ class ParserResponseTest < Test::Unit::TestCase
     parser << "Transfer-Encoding: chunked\r\nTrailer: X-Checksum\r\n\r\n"
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "x-invalid\0key: value\r\n\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field name at line 8, char 10
+
+x-invalid#{null}key: value\\r\\n
+            ^
+    MESSAGE
   end
   
   def test_invalid_trailer_value
@@ -1283,21 +1309,65 @@ class ParserResponseTest < Test::Unit::TestCase
     parser << "Transfer-Encoding: chunked\r\nTrailer: X-Checksum\r\n\r\n"
     parser << "14\r\n<h1>Hello world</h1>\r\n0\r\n"
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "x-test: inva\0lid\r\n\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field body at line 8, char 13
+
+x-test: inva#{null}lid\\r\\n
+               ^
+    MESSAGE
   end
+  
+  def test_invalid_protocol
+    parser = HTTPTools::Parser.new
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "HTTZ/1.1 200 OX\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Protocol or method not recognised at line 1, char 4
+
+HTTZ/1.1 200 OX\\r\\n
+   ^
+    MESSAGE
+  end
+  
   
   def test_invalid_version
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "HTTP/one dot one 200 OK"}
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "HTTP/one dot one 200 OK"
+    end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Invalid version specifier at line 1, char 6
+
+HTTP/one dot one 200 OK
+     ^
+    MESSAGE
   end
   
   def test_invalid_status
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "HTTP/1.1 0 Fail"}
+    error = assert_raise(HTTPTools::ParseError) {parser << "HTTP/1.1 0 Fail"}
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Invalid status line at line 1, char 11
+
+HTTP/1.1 0 Fail
+          ^
+    MESSAGE
   end
   
   def test_finish_early

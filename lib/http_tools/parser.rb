@@ -297,7 +297,7 @@ module HTTPTools
     alias on add_listener
     
     def inspect # :nodoc:
-      super.sub(/ .*>$/, " #{posstr} #{state}>")
+      super.sub(/ .*>$/, " #{posstr(false)} #{state}>")
     end
     
     private
@@ -313,6 +313,7 @@ module HTTPTools
       elsif @allow_html_without_header && @buffer.check(/\s*</i)
         skip_header
       else
+        @buffer.skip(/H(T(TP?)?)?/i) || @buffer.skip(/[a-z]+/i)
         raise ParseError.new("Protocol or method not recognised at " + posstr)
       end
     end
@@ -328,6 +329,7 @@ module HTTPTools
       elsif @buffer.check(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]+\Z/i)
         :uri
       else
+        @buffer.skip(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]+/i)
         raise ParseError.new("URI or path not recognised at " + posstr)
       end
     end
@@ -343,6 +345,7 @@ module HTTPTools
         @buffer.check(/ (H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?)?\Z/i)
         :request_http_version
       else
+        @buffer.skip(/ (H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?)?/i)
         raise ParseError.new("Invalid version specifier at " + posstr)
       end
     end
@@ -356,6 +359,7 @@ module HTTPTools
         @buffer.check(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?\Z/i)
         :response_http_version
       else
+        @buffer.skip(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?/i)
         raise ParseError.new("Invalid version specifier at " + posstr)
       end
     end
@@ -379,6 +383,7 @@ module HTTPTools
         @buffer.check(/\d(\d(\d( ([^\x00-\x1f\x7f]+\r?)?)?)?)?\Z/i)
         :status
       else
+        @buffer.skip(/\d(\d(\d( ([^\x00-\x1f\x7f]+\r?)?)?)?)?/i)
         raise ParseError.new("Invalid status line at " + posstr)
       end
     end
@@ -398,6 +403,7 @@ module HTTPTools
         @last_key.chomp!(COLON)
         value
       elsif @request_method
+        @buffer.skip(/[ -9;-~]+/i)
         raise ParseError.new("Illegal character in field name at " + posstr)
       else
         skip_bad_header
@@ -410,6 +416,7 @@ module HTTPTools
       elsif @buffer.check(/[^\x00\n\x7f]+\Z/)
         :skip_bad_header
       else
+        @buffer.skip(/[ -9;-~]+/i)
         raise ParseError.new("Illegal character in field name at " + posstr)
       end
     end
@@ -432,6 +439,7 @@ module HTTPTools
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :value
       else
+        @buffer.skip(/[^\x00\n\x7f]+/i)
         raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
@@ -546,6 +554,7 @@ module HTTPTools
         @last_key.chomp!(COLON)
         trailer_value
       else
+        @buffer.skip(/[ -9;-~]+/i)
         raise ParseError.new("Illegal character in field name at " + posstr)
       end
     end
@@ -563,6 +572,7 @@ module HTTPTools
       elsif @buffer.eos? || @buffer.check(/[^\x00\n\x7f]+\Z/i)
         :trailer_value
       else
+        @buffer.skip(/[^\x00\n\x7f]+/i)
         raise ParseError.new("Illegal character in field body at " + posstr)
       end
     end
@@ -605,19 +615,28 @@ module HTTPTools
     end
     
     def line_char(string, position)
-      line_count = 1
+      line_count = 0
       char_count = 0
       string.each_line do |line|
         break if line.length + char_count >= position
         line_count += 1
         char_count += line.length
       end
-      [line_count, position + 1 - char_count]
+      [line_count, position - char_count]
     end
     
-    def posstr
-      line, char = line_char(@buffer.string, @buffer.pos)
-      "line #{line}, char #{char}"
+    def posstr(visual=true)
+      line_num, char_num = line_char(@buffer.string, @buffer.pos)
+      out = "line #{line_num + 1}, char #{char_num + 1}"
+      return out unless visual && @buffer.string.respond_to?(:lines)
+      line = ""
+      pointer = nil
+      @buffer.string.lines.to_a[line_num].chars.each_with_index.map do |char, i|
+        line << char.dump.gsub(/(^"|"$)/, "")
+        pointer = "#{" " * (line.length - 1)}^" if i == char_num
+      end
+      pointer ||= " " * line.length + "^"
+      [out, "", line, pointer].join("\n")
     end
     
   end

@@ -75,9 +75,17 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_invalid_path
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "GET \\ HTTP/1.1\r\n\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+URI or path not recognised at line 1, char 5
+
+GET \\\\ HTTP/1.1\\r\\n
+     ^
+    MESSAGE
   end
   
   def test_uri
@@ -119,9 +127,33 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_fragment_with_path
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "GET /foo#bar HTTP/1.1\r\n\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+URI or path not recognised at line 1, char 9
+
+GET /foo#bar HTTP/1.1\\r\\n
+        ^
+    MESSAGE
+  end
+  
+  def test_fragment_with_uri
+    parser = HTTPTools::Parser.new
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "GET http://example.com/foo#bar HTTP/1.1\r\n\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+URI or path not recognised at line 1, char 27
+
+GET http://example.com/foo#bar HTTP/1.1\\r\\n
+                          ^
+    MESSAGE
   end
   
   def test_fragment_with_unfinished_path
@@ -130,14 +162,14 @@ class ParserRequestTest < Test::Unit::TestCase
     error = assert_raise(HTTPTools::ParseError) do
       parser << "GET /foo#ba"
     end
-  end
-  
-  def test_fragment_with_uri
-    parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
-      parser << "GET http://example.com/foo#bar HTTP/1.1\r\n\r\n"
-    end
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+URI or path not recognised at line 1, char 9
+
+GET /foo#ba
+        ^
+    MESSAGE
   end
   
   def test_with_header
@@ -294,7 +326,15 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_unknown_protocol
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "GET / SPDY/1.1\r\n"}
+    error = assert_raise(HTTPTools::ParseError) {parser << "GET / SPDY/1.1\r\n"}
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Invalid version specifier at line 1, char 7
+
+GET / SPDY/1.1\\r\\n
+      ^
+    MESSAGE
   end
   
   def test_protocol_version
@@ -311,7 +351,15 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_protocol_without_version
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP\r\n\r\n"}
+    error = assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP\r\n\r\n"}
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Invalid version specifier at line 1, char 11
+
+GET / HTTP\\r\\n
+           ^
+    MESSAGE
   end
   
   def test_one_dot_x_protocol_version
@@ -440,7 +488,7 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_not_a_http_request
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "not a http request"}
+    assert_raise(HTTPTools::ParseError) {parser << "not a http/1.1 request"}
   end
   
   def test_data_past_end
@@ -466,6 +514,23 @@ class ParserRequestTest < Test::Unit::TestCase
     assert_equal("get", result)
   end
   
+  def test_invalid_method
+    parser = HTTPTools::Parser.new
+    
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "G3T / HTTP/1.1\r\n\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Protocol or method not recognised at line 1, char 2
+
+G3T / HTTP/1.1\\r\\n
+ ^
+    MESSAGE
+  end
+  
+  
   def test_lowercase_http
     parser = HTTPTools::Parser.new
     version = nil
@@ -480,31 +545,68 @@ class ParserRequestTest < Test::Unit::TestCase
   def test_invalid_version
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) {parser << "GET / HTTP/one dot one\r\n"}
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "GET / HTTP/one dot one\r\n"
+    end
+    
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Invalid version specifier at line 1, char 12
+
+GET / HTTP/one dot one\\r\\n
+           ^
+    MESSAGE
   end
   
   def test_invalid_header_key_with_control_character
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
+    error = assert_raise(HTTPTools::ParseError) do
       parser << "GET / HTTP/1.1\r\nx-invalid\0key: text/plain\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field name at line 2, char 10
+
+x-invalid#{null}key: text/plain\\r\\n
+            ^
+    MESSAGE
   end
   
   def test_invalid_header_key_with_non_ascii_character
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nx-invalid\u2014key: text/plain\r\n"
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "GET / HTTP/1.1\r\nx-invalid\342\200\224key: text/plain\r\n"
     end
+    
+    em_dash = "\342\200\224".dump.gsub(/"/, "")
+    return unless "".respond_to?(:lines)
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field name at line 2, char 10
+
+x-invalid#{em_dash}key: text/plain\\r\\n
+         #{" " * (em_dash.length / 4)}^
+    MESSAGE
   end
   
   def test_invalid_header_value_with_non_control_character
     parser = HTTPTools::Parser.new
     
-    assert_raise(HTTPTools::ParseError) do
-      parser << "GET / HTTP/1.1\r\nAccept: \000text/plain\r\n"
+    error = assert_raise(HTTPTools::ParseError) do
+      parser << "GET / HTTP/1.1\r\nAccept: text\000plain\r\n"
     end
+    
+    return unless "".respond_to?(:lines)
+    null = "\000".dump.gsub(/"/, "")
+    assert_equal(<<-MESSAGE.chomp, error.message)
+Illegal character in field body at line 2, char 13
+
+Accept: text#{null}plain\\r\\n
+               ^
+    MESSAGE
   end
   
   def test_error_callback
