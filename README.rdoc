@@ -13,8 +13,8 @@ should run across all Ruby implementations compatible with 1.8 or later, and
 install in environments without a compiler available.
 
 Tests are currently run on travis-ci[http://travis-ci.org/matsadler/http_tools]
-against Ruby 1.8.6, 1.8.7, 1.9.2, 1.9.3, JRuby, Rubinius, Rubinius 2, and Ruby
-Enterprise Edition. Additionally tests are run against MacRuby 0.10
+against Ruby 1.8.7, 1.9.2, 1.9.3, JRuby, Rubinius, and Ruby
+Enterprise Edition. Additionally tests are run against 1.8.6 and MacRuby
 
 Performance tuning is mainly aimed at Ruby 1.9, with Ruby 1.8 and JRuby taken in
 to consideration. JRuby is generally fastest.
