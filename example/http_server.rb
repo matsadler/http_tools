@@ -3,19 +3,20 @@ require 'rubygems'
 require 'http_tools'
 
 module HTTP
+  
+  # Basic Rack HTTP server.
+  # 
+  # Usage:
+  # 
+  #   app = lambda {|env| [200, {"Content-Length" => "3"}, ["Hi\n"]]}
+  #   HTTP::Server.run(app)
+  # 
   class Server
-    CONNECTION = "Connection".freeze
-    KEEP_ALIVE = "Keep-Alive".freeze
-    CLOSE = "close".freeze
-    ONE_ONE = "1.1".freeze
     
     def initialize(app, options={})
-      host = options[:host] || options[:Host] || "0.0.0.0"
-      port = (options[:port] || options[:Port] || 9292).to_s
+      @host = options[:host] || options[:Host] || "0.0.0.0"
+      @port = (options[:port] || options[:Port] || 9292).to_s
       @app = app
-      @instance_env = {"rack.multithread" => true}
-      @server = TCPServer.new(host, port)
-      @server.listen(1024)
     end
     
     def self.run(app, options={})
@@ -23,25 +24,23 @@ module HTTP
     end
     
     def listen
-      while socket = @server.accept
-        Thread.new do
-          begin
-            on_connection(socket)
-          rescue StandardError, LoadError, SyntaxError => e
-            STDERR.puts("#{e.class}: #{e.message} #{e.backtrace.join("\n")}")
-          end
-        end
+      server = TCPServer.new(@host, @port)
+      while socket = server.accept
+        Thread.new {on_connection(socket)}
       end
     end
     
     private
+    
     def on_connection(socket)
       parser = HTTPTools::Parser.new
       
       parser.on(:finish) do
-        status, header, body = @app.call(parser.env.merge!(@instance_env))
-        keep_alive = keep_alive?(parser.version, parser.header[CONNECTION])
-        header[CONNECTION] = keep_alive ? KEEP_ALIVE : CLOSE
+        env = parser.env.merge!("rack.multithread" => true)
+        status, header, body = @app.call(env)
+        
+        keep_alive = parser.header["Connection"] != "close"
+        header["Connection"] = keep_alive ? "Keep-Alive" : "close"
         socket << HTTPTools::Builder.response(status, header)
         body.each {|chunk| socket << chunk}
         body.close if body.respond_to?(:close)
@@ -56,11 +55,11 @@ module HTTP
       rescue EOFError
         break
       end until parser.finished?
+      
+    rescue StandardError, LoadError, SyntaxError => e
+      STDERR.puts("#{e.class}: #{e.message} #{e.backtrace.join("\n")}")
+    ensure
       socket.close
-    end
-    
-    def keep_alive?(http_version, connection)
-      http_version == ONE_ONE && connection != CLOSE || connection == KEEP_ALIVE
     end
     
   end
