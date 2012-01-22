@@ -29,7 +29,7 @@ possible.
 
   parser = HTTPTools::Parser.new
   parser.on(:header) do
-    puts parser.status_code + " " + parser.message
+    puts parser.status_code.to_s + " " + parser.message
     puts parser.header.inspect
   end
   parser.on(:finish) {print parser.body}
