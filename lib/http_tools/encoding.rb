@@ -37,8 +37,7 @@ module HTTPTools
     # 
     def url_decode(string)
       string.tr(PLUS, SPACE).gsub(/(%[0-9a-f]{2})+/i) do |match|
-        r = [match.delete(PERCENT)].pack(HEX_BIG_ENDIAN_REPEATING)
-        r.respond_to?(:force_encoding) ? r.force_encoding(string.encoding) : r
+        [match.delete(PERCENT)].pack(HEX_BIG_ENDIAN_REPEATING)
       end
     end
     

@@ -32,7 +32,12 @@ class URLEncodingTest < Test::Unit::TestCase
   def test_decode_latin_capital_letter_a_with_grave
     result = HTTPTools::Encoding.url_decode("%C3%80")
     
-    assert_equal("À", result)
+    if defined?(RUBY_ENGINE) && RUBY_ENGINE == "macruby"
+      # work around macruby not respecting the coding comment
+      assert_equal("À".force_encoding("ASCII-8BIT"), result)
+    else
+      assert_equal("À", result)
+    end
   end
   
 end
