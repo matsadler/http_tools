@@ -1,4 +1,4 @@
-# encoding: utf-8
+# encoding: ASCII-8BIT
 base = File.expand_path(File.dirname(__FILE__) + '/../../lib')
 require base + '/http_tools'
 require 'test/unit'
@@ -24,7 +24,7 @@ class URLEncodingTest < Test::Unit::TestCase
   end
   
   def test_encode_latin_capital_letter_a_with_grave
-    result = HTTPTools::Encoding.url_encode("À")
+    result = HTTPTools::Encoding.url_encode("\xC3\x80")
     
     assert_equal("%c3%80", result)
   end
@@ -32,7 +32,7 @@ class URLEncodingTest < Test::Unit::TestCase
   def test_decode_latin_capital_letter_a_with_grave
     result = HTTPTools::Encoding.url_decode("%C3%80")
     
-    assert_equal("À", result)
+    assert_equal("\xC3\x80", result)
   end
   
 end

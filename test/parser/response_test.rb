@@ -1,4 +1,3 @@
-# encoding: utf-8
 base = File.expand_path(File.dirname(__FILE__) + '/../../lib')
 require base + '/http_tools'
 require 'test/unit'
@@ -98,10 +97,14 @@ class ParserResponseTest < Test::Unit::TestCase
       code, message = parser.status_code, parser.message
     end
     
-    parser << "HTTP/1.1 403 Accès interdit\r\n\r\n"
+    parser << "HTTP/1.1 403 Acc\xC3\xA8s interdit\r\n\r\n"
     
     assert_equal(403, code)
-    assert_equal("Accès interdit", message)
+    expected_message = "Acc\xC3\xA8s interdit"
+    if expected_message.respond_to?(:force_encoding)
+      expected_message.force_encoding(message.encoding)
+    end
+    assert_equal(expected_message, message)
     assert(!parser.finished?, "parser should not be finished")
   end
   
