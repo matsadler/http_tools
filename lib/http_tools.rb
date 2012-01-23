@@ -1,3 +1,4 @@
+# encoding: ASCII-8BIT
 require_base = File.expand_path('../http_tools', __FILE__)
 require require_base + '/encoding'
 require require_base + '/parser'

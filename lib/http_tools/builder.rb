@@ -1,3 +1,4 @@
+# encoding: ASCII-8BIT
 module HTTPTools
   
   # HTTPTools::Builder is a provides a simple interface to build HTTP requests &
