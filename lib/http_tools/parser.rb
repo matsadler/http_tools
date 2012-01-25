@@ -61,7 +61,7 @@ module HTTPTools
     HTTP_ = "HTTP_".freeze
     LOWERCASE = "a-z-".freeze
     UPPERCASE = "A-Z_".freeze
-    NO_HTTP_ = {"CONTENT_LENGTH" => true, "CONTENT_TYPE" => true}
+    NO_HTTP_ = {"CONTENT_LENGTH" => true, "CONTENT_TYPE" => true}.freeze
     # :startdoc:
     EVENTS = %W{header stream trailer finish error}.map {|e| e.freeze}.freeze
     

@@ -111,7 +111,7 @@ module HTTPTools
   # :stopdoc: hide from rdoc as it makes a mess
   STATUS_LINES = {}
   STATUS_CODES.each do |name, code|
-    line = "#{code} #{STATUS_DESCRIPTIONS[code]}"
+    line = "#{code} #{STATUS_DESCRIPTIONS[code]}".freeze
     STATUS_LINES[name] = line
     STATUS_LINES[code] = line
   end
