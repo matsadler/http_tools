@@ -120,7 +120,9 @@ module HTTPTools
   
   METHODS = %W{GET POST HEAD PUT DELETE OPTIONS TRACE CONNECT}.freeze
   
+  #--
   # presence of key tested, not value
+  #++
   NO_BODY = {204 => true, 205 => true, 304 => true}
   100.upto(199) {|status_code| NO_BODY[status_code] = true}
   NO_BODY.freeze

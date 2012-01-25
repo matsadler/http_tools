@@ -7,14 +7,14 @@ module HTTPTools
   # HTTPTools::Parser is a pure Ruby HTTP request & response parser with an
   # evented API.
   # 
-  # The HTTP message can be fed in to the parser piece by piece as it comes over
-  # the wire, and the parser will call its callbacks as it works it's way
+  # The HTTP message can be fed into the parser piece by piece as it comes over
+  # the wire, and the parser will call its callbacks as it works its way
   # through the message.
   # 
   # Example:
   #   parser = HTTPTools::Parser.new
   #   parser.on(:header) do
-  #     puts parser.status_code + " " + parser.message
+  #     puts parser.status_code.to_s + " " + parser.message
   #     puts parser.header.inspect
   #   end
   #   parser.on(:finish) {print parser.body}
@@ -109,7 +109,7 @@ module HTTPTools
     # :call-seq: parser.concat(data) -> parser
     # parser << data -> parser
     # 
-    # Feed data in to the parser and trigger callbacks.
+    # Feed data into the parser and trigger callbacks.
     # 
     # Will raise HTTPTools::ParseError on error, unless a callback has been set
     # for the :error event, in which case the callback will recieve the error
@@ -128,10 +128,10 @@ module HTTPTools
     # before headers are complete.
     #
     # "SERVER_NAME" and "SERVER_PORT" are only supplied if they can be
-    # determined from the request (eg, they are present in the "Host" header).
+    # determined from the request (e.g., they are present in the "Host" header).
     # 
     # "rack.input" is only supplied if #env is called after parsing the request
-    # has finsished, and no listener is set for the `stream` event
+    # has finsished, and no listener is set for the +stream+ event
     # 
     # If not supplied, you must ensure "SERVER_NAME", "SERVER_PORT", and
     # "rack.input" are present to make the environment hash fully Rack compliant
@@ -237,7 +237,7 @@ module HTTPTools
     # :call-seq: parser.reset -> parser
     # 
     # Reset the parser so it can be used to process a new request.
-    # Callbacks/delegates will not be removed.
+    # Callbacks will not be removed.
     # 
     def reset
       @state = :start
@@ -273,23 +273,22 @@ module HTTPTools
     # Adding a second callback for an event will overwite the existing callback.
     # 
     # Events:
-    # [header]     Called when headers are complete
+    # [header]  Called when headers are complete
     # 
-    # [stream]     Supplied with one argument, the last chunk of body data fed
-    #              in to the parser as a String, e.g. "<h1>Hello". If no
-    #              listener is set for this event the body can be retrieved with
-    #              #body
+    # [stream]  Supplied with one argument, the last chunk of body data fed in
+    #           to the parser as a String, e.g. "<h1>Hello". If no listener is
+    #           set for this event the body can be retrieved with #body
     # 
-    # [trailer]    Called on the completion of the trailer, if present
+    # [trailer] Called on the completion of the trailer, if present
     # 
-    # [finish]     Called on completion of the entire message. Any unconsumed
-    #              data (such as the start of the next message with keepalive)
-    #              can be retrieved with #rest
+    # [finish]  Called on completion of the entire message. Any unconsumed data
+    #           (such as the start of the next message with keepalive) can be
+    #           retrieved with #rest
     # 
-    # [error]      Supplied with one argument, an error encountered while
-    #              parsing as a HTTPTools::ParseError. If a listener isn't
-    #              registered for this event, an exception will be raised when
-    #              an error is encountered
+    # [error]   Supplied with one argument, an error encountered while parsing
+    #           as a HTTPTools::ParseError. If a listener isn't registered for
+    #           this event, an exception will be raised when an error is
+    #           encountered
     # 
     def add_listener(event, proc=nil, &block)
       instance_variable_set(:"@#{event}_callback", proc || block)

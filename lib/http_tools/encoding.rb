@@ -22,7 +22,7 @@ module HTTPTools
     
     # :call-seq: Encoding.url_encode(string) -> encoded_string
     # 
-    # URL encode a string, eg "le café" becomes "le+caf%c3%a9"
+    # URL encode a string, e.g. "le café" becomes "le+caf%c3%a9"
     # 
     def url_encode(string)
       string.gsub(/[^a-z0-9._~-]+/i) do |match|
@@ -33,7 +33,7 @@ module HTTPTools
     
     # :call-seq: Encoding.url_decode(encoded_string) -> string
     # 
-    # URL decode a string, eg "le+caf%c3%a9" becomes "le café"
+    # URL decode a string, e.g. "le+caf%c3%a9" becomes "le café"
     # 
     def url_decode(string)
       string.tr(PLUS, SPACE).gsub(/(%[0-9a-f]{2})+/i) do |match|
@@ -44,11 +44,11 @@ module HTTPTools
     # :call-seq: Encoding.www_form_encode(hash) -> string
     # 
     # Takes a Hash and converts it to a String as if it was a HTML form being
-    # submitted, eg
+    # submitted, e.g.
     # {"query" => "fish", "lang" => "en"} becomes "query=fish&lang=en"
     # 
     # To get multiple key value pairs with the same key use an array as the
-    # value, eg
+    # value, e.g.
     # {"lang" => ["en", "fr"]} become "lang=en&lang=fr"
     # 
     def www_form_encode(hash)
@@ -65,10 +65,10 @@ module HTTPTools
     # 
     # Takes a String resulting from a HTML form being submitted, and converts it
     # to a hash,
-    # eg "lang=en&query=fish" becomes {"lang" => "en", "query" => "fish"}
+    # e.g. "lang=en&query=fish" becomes {"lang" => "en", "query" => "fish"}
     # 
     # Multiple key value pairs with the same key will become a single key with
-    # an array value, eg "lang=en&lang=fr" becomes {"lang" => ["en", "fr"]}
+    # an array value, e.g. "lang=en&lang=fr" becomes {"lang" => ["en", "fr"]}
     #
     def www_form_decode(string)
       out = {}
@@ -88,10 +88,10 @@ module HTTPTools
     # Encoding.transfer_encoding_chunked_encode(string) -> encoded_string
     # 
     # Returns string as a 'chunked' transfer encoding encoded string, suitable
-    # for a streaming response from a HTTP server, eg
-    # "foo" becomes "3\r\nfoo\r\n"
+    # for a streaming response from a HTTP server, e.g.
+    # "foo" becomes "3\\r\\nfoo\\r\\n"
     #
-    # chunked responses should be terminted with a empty chunk, eg "0\r\n",
+    # chunked responses should be terminted with a empty chunk, e.g. "0\\r\\n",
     # passing an empty string or nil will generate the empty chunk.
     # 
     def transfer_encoding_chunked_encode(string)
@@ -107,14 +107,12 @@ module HTTPTools
     # 
     # Decoding a complete chunked response will return an array containing
     # the decoded response and nil.
-    # Example:
     #   encoded_string = "3\r\nfoo\r\n3\r\nbar\r\n0\r\n"
     #   Encoding.transfer_encoding_chunked_decode(encoded_string)
     #   #=> ["foobar", nil]
     # 
     # Decoding a partial response will return an array of the response decoded
     # so far, and the remainder of the encoded string.
-    # Example
     #   encoded_string = "3\r\nfoo\r\n3\r\nba"
     #   Encoding.transfer_encoding_chunked_decode(encoded_string)
     #   #=> ["foo", "3\r\nba"]
@@ -126,7 +124,7 @@ module HTTPTools
     #   #=> ["foobar", ""]
     # 
     # If nothing can be decoded the first element in the array will be nil and
-    # the second the remainder
+    # the second the remainder.
     #   encoded_string = "3\r\nfo"
     #   Encoding.transfer_encoding_chunked_decode(encoded_string)
     #   #=> [nil, "3\r\nfo"]
