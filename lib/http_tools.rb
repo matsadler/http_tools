@@ -3,6 +3,7 @@ require_base = File.expand_path('../http_tools', __FILE__)
 require require_base + '/encoding'
 require require_base + '/parser'
 require require_base + '/builder'
+require require_base + '/multipart_form_data_parser'
 
 module HTTPTools
   STATUS_CODES = {
