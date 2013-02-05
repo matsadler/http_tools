@@ -28,6 +28,12 @@ class BuilderResponseTest < Test::Unit::TestCase
     assert_equal("HTTP/1.1 500 Internal Server Error\r\n\r\n", result)
   end
   
+  def test_status_unrecognised
+    result = HTTPTools::Builder.response(600)
+    
+    assert_equal("HTTP/1.1 600\r\n\r\n", result)
+  end
+  
   def test_headers
     result = HTTPTools::Builder.response(:ok, "Content-Type" => "text/html", "Content-Length" => 1024)
     

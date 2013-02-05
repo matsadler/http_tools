@@ -22,8 +22,8 @@ module HTTPTools
     #   Builder.response(:ok, "Set-Cookie" => ["a=b", "c=d"])
     #   Builder.response(:ok, "Set-Cookie" => "a=b\nc=d")
     # 
-    def response(status, headers={})
-      "HTTP/1.1 #{STATUS_LINES[status]}\r\n#{format_headers(headers)}\r\n"
+    def response(code, headers={})
+      "HTTP/1.1 #{STATUS_LINES[code] || code}\r\n#{format_headers(headers)}\r\n"
     end
     
     # :call-seq: Builder.request(method, host, path="/", headers={}) -> string
