@@ -188,9 +188,9 @@ module HTTPTools
         @header.any? {|k,v| CONNECTION.casecmp(k) == 0 && CLOSE.casecmp(v) == 0}
         @state = end_of_message
       elsif @state == :start && @buffer.string.length < 1
-        raise EmptyMessageError.new("Message empty")
+        raise EmptyMessageError, "Message empty"
       else
-        raise MessageIncompleteError.new("Message ended early")
+        raise MessageIncompleteError, "Message ended early"
       end
       self
     end
@@ -314,7 +314,7 @@ module HTTPTools
         skip_header
       else
         @buffer.skip(/H(T(TP?)?)?/i) || @buffer.skip(/[a-z]+/i)
-        raise ParseError.new("Protocol or method not recognised at " + posstr)
+        raise ParseError, "Protocol or method not recognised at " + posstr
       end
     end
     
@@ -330,7 +330,7 @@ module HTTPTools
         :uri
       else
         @buffer.skip(/[a-z0-9;\/?:@&=+$,%_.!~*')(-]+/i)
-        raise ParseError.new("URI or path not recognised at " + posstr)
+        raise ParseError, "URI or path not recognised at " + posstr
       end
     end
     
@@ -346,7 +346,7 @@ module HTTPTools
         :request_http_version
       else
         @buffer.skip(/ (H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?)?/i)
-        raise ParseError.new("Invalid version specifier at " + posstr)
+        raise ParseError, "Invalid version specifier at " + posstr
       end
     end
     
@@ -360,7 +360,7 @@ module HTTPTools
         :response_http_version
       else
         @buffer.skip(/H(T(T(P(\/(\d+(\.(\d+\r?)?)?)?)?)?)?)?/i)
-        raise ParseError.new("Invalid version specifier at " + posstr)
+        raise ParseError, "Invalid version specifier at " + posstr
       end
     end
     
@@ -384,7 +384,7 @@ module HTTPTools
         :status
       else
         @buffer.skip(/\d(\d(\d( ([^\x00-\x1f\x7f]+\r?)?)?)?)?/i)
-        raise ParseError.new("Invalid status line at " + posstr)
+        raise ParseError, "Invalid status line at " + posstr
       end
     end
     
@@ -404,7 +404,7 @@ module HTTPTools
         value
       elsif @request_method
         @buffer.skip(/[ -9;-~]+/i)
-        raise ParseError.new("Illegal character in field name at " + posstr)
+        raise ParseError, "Illegal character in field name at " + posstr
       else
         skip_bad_header
       end
@@ -417,7 +417,7 @@ module HTTPTools
         :skip_bad_header
       else
         @buffer.skip(/[ -9;-~]+/i)
-        raise ParseError.new("Illegal character in field name at " + posstr)
+        raise ParseError, "Illegal character in field name at " + posstr
       end
     end
     
@@ -440,7 +440,7 @@ module HTTPTools
         :value
       else
         @buffer.skip(/[^\x00\n\x7f]+/i)
-        raise ParseError.new("Illegal character in field body at " + posstr)
+        raise ParseError, "Illegal character in field body at " + posstr
       end
     end
     
@@ -456,7 +456,7 @@ module HTTPTools
         :value_extention
       else
         @buffer.skip(/[ \t]+[^\x00\n\x7f]*/i)
-        raise ParseError.new("Illegal character in field body at " + posstr)
+        raise ParseError, "Illegal character in field body at " + posstr
       end
     end
     
@@ -519,7 +519,7 @@ module HTTPTools
             break end_of_message
           end
         elsif @max_chunk_size && chunk_length > @max_chunk_size
-          raise ParseError.new("Maximum chunk size exceeded")
+          raise ParseError, "Maximum chunk size exceeded"
         end
         
         begin
@@ -558,7 +558,7 @@ module HTTPTools
         trailer_value
       else
         @buffer.skip(/[ -9;-~]+/i)
-        raise ParseError.new("Illegal character in field name at " + posstr)
+        raise ParseError, "Illegal character in field name at " + posstr
       end
     end
     
@@ -576,7 +576,7 @@ module HTTPTools
         :trailer_value
       else
         @buffer.skip(/[^\x00\n\x7f]+/i)
-        raise ParseError.new("Illegal character in field body at " + posstr)
+        raise ParseError, "Illegal character in field body at " + posstr
       end
     end
     
@@ -592,20 +592,20 @@ module HTTPTools
         :trailer_value_extention
       else
         @buffer.skip(/[ \t]+[^\x00\n\x7f]*/i)
-        raise ParseError.new("Illegal character in field body at " + posstr)
+        raise ParseError, "Illegal character in field body at " + posstr
       end
     end
     
     def end_of_message
-      raise EndOfMessageError.new("Message ended") if @state == :end_of_message
+      raise EndOfMessageError, "Message ended" if @state == :end_of_message
       @finish_callback.call if @finish_callback
       :end_of_message
     end
     
-    def raise(*args)
+    def raise(klass, message)
       @state = :error
       super unless @error_callback
-      @error_callback.call(args.first)
+      @error_callback.call(klass.new(message))
       :error
     end
     alias error raise
