@@ -637,12 +637,23 @@ module HTTPTools
       return out unless visual && @buffer.string.respond_to?(:lines)
       line = ""
       pointer = nil
-      @buffer.string.lines.to_a[line_num].chars.each_with_index.map do |char, i|
-        line << char.dump.gsub(/(^"|"$)/, "")
+      @buffer.string.lines.to_a[line_num].chars.to_a.each_with_index do |char,i|
+        line << format_char(char)
         pointer = "#{" " * (line.length - 1)}^" if i == char_num
       end
       pointer ||= " " * line.length + "^"
       [out, "", line, pointer].join("\n")
+    end
+    
+    def format_char(char)
+      case char
+      when "a".."z", "A".."Z", "0".."9", "#"
+        char
+      when "\\"
+        "\\\\"
+      else
+        char.dump.gsub(/(^"|"$)/, "")
+      end
     end
     
   end
